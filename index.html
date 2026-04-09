@@ -672,6 +672,38 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+<script>
+function generateOutput() {
+  const input = document.getElementById("caInput").value;
+  const outputBox = document.getElementById("outputBox");
+
+  if (!input.trim()) {
+    alert("Please enter details");
+    return;
+  }
+
+  outputBox.innerHTML = "Generating...";
+
+  setTimeout(() => {
+    outputBox.innerHTML = `
+To,  
+The Proper Officer,  
+
+Subject: Reply to SCN under Section 73 – ITC Mismatch  
+
+Respected Sir/Madam,  
+
+This is in reference to your notice regarding ITC mismatch.  
+
+The supplier has now filed returns and the mismatch stands resolved. Goods were received and payment was made within 180 days.  
+
+Hence, ITC claimed is valid. Kindly drop the proceedings.  
+
+Thanking you,  
+Authorized Signatory  
+`;
+  }, 1500);
+}
 </script>
 </body>
 </html>
