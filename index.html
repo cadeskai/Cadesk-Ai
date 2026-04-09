@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAdesk.ai — AI Assistant for Indian Chartered Accountants</title>
+<meta name="description" content="The AI tool built for Indian CA firms. Draft GST notices, audit reports, client emails and tax advisory letters in seconds.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://js.puter.com/v2/"></script>
+<style>
+:root {
+  --ink: #0f0e0b;
+  --paper: #f5f2eb;
+  --cream: #ede9df;
+  --warm: #e8e2d4;
+  --gold: #b8860b;
+  --gold-light: #d4a017;
+  --text: #1a1816;
+  --muted: #6b6560;
+  --border: #d4cfc5;
+  --surface: #ffffff;
+  --green: #1a7a4a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 16px; line-height: 1.6;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 48px;
+  background: rgba(245,242,235,0.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--ink); }
+.logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: var(--text); }
+.nav-cta { background: var(--ink) !important; color: var(--paper) !important; padding: 10px 22px; border-radius: 4px; font-weight: 600 !important; font-size: 13px !important; letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: grid; grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 120px 48px 80px;
+  gap: 80px; max-width: 1200px; margin: 0 auto;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 24px;
+}
+.hero-eyebrow::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(38px, 4.5vw, 58px); font-weight: 900;
+  line-height: 1.08; letter-spacing: -1.5px; color: var(--ink); margin-bottom: 24px;
+}
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub { font-size: 17px; color: var(--muted); font-weight: 300; max-width: 440px; margin-bottom: 40px; line-height: 1.7; }
+.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+.btn-primary { background: var(--ink); color: var(--paper); padding: 14px 32px; border-radius: 4px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.2s, transform 0.15s; }
+.btn-primary:hover { background: #2a2720; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text); padding: 14px 32px; border-radius: 4px; font-weight: 500; font-size: 14px; border: 1.5px solid var(--border); cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: border-color 0.2s, background 0.2s; }
+.btn-ghost:hover { border-color: var(--text); background: var(--cream); }
+
+.hero-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 80px rgba(15,14,11,0.12), 0 4px 16px rgba(15,14,11,0.06);
+  animation: floatCard 6s ease-in-out infinite;
+}
+@keyframes floatCard { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.card-header { background: var(--ink); padding: 14px 20px; display: flex; align-items: center; gap: 10px; }
+.cdot { width: 10px; height: 10px; border-radius: 50%; }
+.card-header-title { font-size: 12px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin: 0 auto; font-weight: 500; }
+.card-body { padding: 24px; }
+.card-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.card-input-preview { background: var(--cream); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; font-size: 13px; color: var(--text); margin-bottom: 16px; line-height: 1.5; }
+.card-output-preview { background: #fff8ee; border: 1px solid #e8d9b0; border-left: 3px solid var(--gold); border-radius: 6px; padding: 14px 16px; font-size: 12.5px; color: var(--text); line-height: 1.65; }
+.card-output-preview strong { color: var(--gold); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+
+/* ── STATS ── */
+.stats-bar { background: var(--ink); padding: 28px 48px; display: flex; justify-content: center; gap: 80px; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat-num { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--paper); }
+.stat-num span { color: var(--gold-light); }
+.stat-label { font-size: 12px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+/* ── SECTION COMMON ── */
+.section { padding: 96px 48px; max-width: 1200px; margin: 0 auto; }
+.section-tag { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.section-tag::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--gold); }
+.section-title { font-family: 'Playfair Display', serif; font-size: clamp(28px, 3.5vw, 44px); font-weight: 700; letter-spacing: -1px; color: var(--ink); margin-bottom: 16px; line-height: 1.15; }
+.section-sub { color: var(--muted); max-width: 520px; font-weight: 300; font-size: 17px; line-height: 1.7; }
+
+/* ── AI TOOL ── */
+.tool-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 40px rgba(15,14,11,0.08); margin-top: 52px; }
+.tool-header { background: var(--ink); padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+.tool-header-title { font-size: 13px; color: #aaa; font-weight: 500; letter-spacing: 0.5px; margin-left: 8px; }
+.tool-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; overflow-x: auto; background: var(--cream); }
+.ttab { padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: 'IBM Plex Sans', sans-serif; transition: color 0.2s, border-color 0.2s; }
+.ttab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 600; }
+.tool-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 420px; }
+.tool-left { padding: 28px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 16px; }
+.tool-right { padding: 28px; background: #fffdf7; display: flex; flex-direction: column; }
+.field-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.quick-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 4px; }
+.chip { background: var(--cream); border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 3px; font-size: 12px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: all 0.15s; }
+.chip:hover { background: var(--warm); border-color: var(--gold); color: var(--gold); }
+#caInput { width: 100%; background: var(--cream); border: 1.5px solid var(--border); border-radius: 6px; padding: 14px 16px; color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; outline: none; resize: none; min-height: 120px; line-height: 1.6; transition: border-color 0.2s; }
+#caInput:focus { border-color: var(--gold); }
+#caInput::placeholder { color: #b0a898; }
+.gen-btn { background: var(--ink); color: var(--paper); border: none; border-radius: 6px; padding: 13px 24px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.gen-btn:hover { background: #2a2720; }
+.gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.output-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.copy-tiny { background: var(--cream); border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: 3px; font-size: 11px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; display: none; transition: all 0.15s; }
+.copy-tiny.show { display: inline; }
+.copy-tiny:hover { border-color: var(--gold); color: var(--gold); }
+#outputBox { flex: 1; background: white; border: 1.5px solid var(--border); border-radius: 6px; padding: 18px; font-size: 13.5px; line-height: 1.75; color: var(--text); overflow-y: auto; white-space: pre-wrap; min-height: 200px; }
+.output-placeholder-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 10px; color: #c5bfb4; font-size: 13px; text-align: center; }
+.output-placeholder-inner svg { opacity: 0.35; }
+.typing-dots { display: none; gap: 5px; align-items: center; padding: 12px 0; }
+.typing-dots.show { display: flex; }
+.tdot { width: 7px; height: 7px; background: var(--gold); border-radius: 50%; animation: tdot 1.2s infinite; }
+.tdot:nth-child(2){animation-delay:.2s} .tdot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(0.6);opacity:0.5}40%{transform:scale(1);opacity:1}}
+
+/* ── FEATURES ── */
+.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; margin-top: 52px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.feat-card { background: var(--surface); padding: 36px 32px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: background 0.2s; }
+.feat-card:hover { background: #fffdf5; }
+.feat-card:nth-child(3n) { border-right: none; }
+.feat-card:nth-last-child(-n+3) { border-bottom: none; }
+.feat-icon { font-size: 26px; margin-bottom: 16px; display: block; }
+.feat-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.feat-desc { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+/* ── PRICING ── */
+.pricing-toggle-wrap { text-align: center; margin-bottom: 48px; margin-top: 52px; }
+.pricing-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+.currency-toggle { display: inline-flex; background: var(--cream); border: 1.5px solid var(--border); border-radius: 6px; overflow: hidden; }
+.currency-btn { padding: 10px 28px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--muted); font-family: 'IBM Plex Sans', sans-serif; transition: all 0.2s; letter-spacing: 0.3px; }
+.currency-btn.active { background: var(--ink); color: var(--paper); }
+
+.pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+.plan { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+.plan:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(15,14,11,0.1); }
+.plan.featured { background: var(--ink); border-color: var(--ink); transform: scale(1.03); }
+.plan.featured:hover { transform: scale(1.03) translateY(-4px); }
+.popular-ribbon { background: var(--gold); color: var(--ink); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: center; padding: 8px; }
+.plan-inner { padding: 36px 32px; }
+.plan-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.plan.featured .plan-name { color: var(--paper); }
+.plan-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.plan.featured .plan-desc { color: #888; }
+.price-inr, .price-usd { display: none; }
+.price-inr.show, .price-usd.show { display: block; margin-bottom: 28px; }
+.price-amount { font-family: 'Playfair Display', serif; font-size: 52px; font-weight: 900; letter-spacing: -3px; line-height: 1; color: var(--ink); }
+.plan.featured .price-amount { color: var(--paper); }
+.price-amount sup { font-size: 22px; letter-spacing: 0; vertical-align: super; }
+.price-period { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.plan.featured .price-period { color: #777; }
+.price-equiv { font-size: 12px; color: var(--muted); margin-top: 3px; font-style: italic; }
+.plan.featured .price-equiv { color: #666; }
+.plan-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+.plan.featured .plan-divider { border-color: #2a2720; }
+.plan-features { list-style: none; margin-bottom: 28px; }
+.plan-features li { font-size: 14px; color: var(--muted); padding: 9px 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+.plan.featured .plan-features li { color: #bbb; border-bottom-color: #222; }
+.plan-features li:last-child { border-bottom: none; }
+.pcheck { color: var(--gold); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.paypal-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; text-align: center; margin-bottom: 10px; font-weight: 600; }
+.plan.featured .paypal-label { color: #666; }
+.pp-btn { width: 100%; padding: 13px; border-radius: 6px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; font-family: 'IBM Plex Sans', sans-serif; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; margin-bottom: 8px; }
+.pp-btn.blue { background: #0070ba; color: white; }
+.pp-btn.blue:hover { background: #005ea6; transform: translateY(-1px); }
+.pp-btn.yellow { background: #ffc439; color: #003087; }
+.pp-btn.yellow:hover { background: #f0b429; transform: translateY(-1px); }
+.or-line { text-align: center; font-size: 12px; color: var(--muted); margin: 8px 0; display: flex; align-items: center; gap: 8px; }
+.or-line::before, .or-line::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.plan.featured .or-line { color: #555; }
+.plan.featured .or-line::before, .plan.featured .or-line::after { background: #2a2720; }
+
+/* ── TESTIMONIALS ── */
+.testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; margin-top: 52px; }
+.testi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px; }
+.testi-quote { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+.testi-quote::before { content: '"'; color: var(--gold); font-size: 20px; line-height: 1; display: block; margin-bottom: 6px; font-style: normal; font-family: 'Playfair Display', serif; }
+.testi-author { font-size: 13px; font-weight: 600; color: var(--ink); }
+.testi-role { font-size: 12px; color: var(--muted); }
+
+/* ── SEO ── */
+.seo-section { background: var(--ink); padding: 80px 48px; }
+.seo-inner { max-width: 1200px; margin: 0 auto; }
+.seo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+.seo-title { font-family: 'Playfair Display', serif; font-size: clamp(26px,3vw,38px); font-weight: 700; color: var(--paper); line-height: 1.2; margin-bottom: 20px; }
+.seo-title em { font-style: italic; color: var(--gold-light); }
+.seo-body { color: #888; font-size: 15px; line-height: 1.7; font-weight: 300; }
+.seo-keywords { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+.kw-pill { background: #1e1d1a; border: 1px solid #333; color: #aaa; padding: 7px 16px; border-radius: 3px; font-size: 12px; letter-spacing: 0.5px; }
+
+/* ── TRUST ── */
+.trust-bar { background: var(--cream); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 48px; }
+.trust-inner { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4,1fr); gap: 32px; text-align: center; }
+.trust-icon { font-size: 28px; margin-bottom: 10px; }
+.trust-title { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.trust-desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+/* ── FAQ ── */
+.faq-wrap { max-width: 700px; margin: 0 auto; padding: 80px 48px; }
+.faq-heading { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; text-align: center; margin-bottom: 40px; letter-spacing: -1px; }
+.faq-item { border-bottom: 1px solid var(--border); padding: 20px 0; }
+.faq-q { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 10px; }
+.faq-a { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+/* ── CTA ── */
+.cta-banner { background: linear-gradient(135deg,#1a1816,#0f0e0b); border-top: 3px solid var(--gold); padding: 80px 48px; text-align: center; }
+.cta-title { font-family: 'Playfair Display', serif; font-size: clamp(28px,4vw,48px); font-weight: 700; color: var(--paper); line-height: 1.15; margin-bottom: 16px; letter-spacing: -1px; }
+.cta-sub { color: #777; font-size: 17px; font-weight: 300; margin-bottom: 36px; }
+.cta-btn { background: var(--gold); color: var(--ink); padding: 16px 48px; border-radius: 4px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; letter-spacing: 0.5px; transition: background 0.2s, transform 0.15s; }
+.cta-btn:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+/* ── FOOTER ── */
+footer { background: var(--ink); border-top: 1px solid #222; padding: 40px 48px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--paper); }
+.footer-logo span { color: var(--gold); }
+.footer-links { display: flex; gap: 28px; }
+.footer-links a { color: #666; text-decoration: none; font-size: 13px; transition: color 0.2s; }
+.footer-links a:hover { color: var(--paper); }
+.footer-copy { color: #444; font-size: 12px; }
+
+/* ── ANIMATIONS ── */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.65s ease, transform 0.65s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) {
+  nav { padding: 14px 20px; }
+  .nav-links { gap: 16px; }
+  .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; gap: 40px; }
+  .hero-right { display: none; }
+  .stats-bar { padding: 28px 20px; gap: 28px; }
+  .section { padding: 64px 20px; }
+  .tool-body { grid-template-columns: 1fr; }
+  .tool-left { border-right: none; border-bottom: 1px solid var(--border); }
+  .feat-grid { grid-template-columns: 1fr; }
+  .feat-card { border-right: none !important; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .plan.featured { transform: scale(1); }
+  .seo-grid { grid-template-columns: 1fr; gap: 40px; }
+  .testi-grid { grid-template-columns: 1fr; }
+  .trust-inner { grid-template-columns: repeat(2,1fr); }
+  .seo-section, .cta-banner, .trust-bar, .faq-wrap { padding: 60px 20px; }
+  footer { padding: 28px 20px; flex-direction: column; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">CAdesk<span>.</span>ai</div>
+  <div class="nav-links">
+    <a href="#tool">Try Free</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#pricing" class="nav-cta">Get Started</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div>
+    <div class="hero-eyebrow">Built for India's CAs</div>
+    <h1>Your Practice,<br><em>Powered</em><br>by AI.</h1>
+    <p class="hero-sub">Draft GST notices, audit reports, client emails, and tax advisory letters in seconds — not hours. Built specifically for Indian Chartered Accountants.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})">Try It Free — No Signup</button>
+      <button class="btn-ghost" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">View Pricing</button>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-card">
+      <div class="card-header">
+        <div class="cdot" style="background:#ff5f57"></div>
+        <div class="cdot" style="background:#febc2e"></div>
+        <div class="cdot" style="background:#28c840"></div>
+        <div class="card-header-title">CAdesk.ai — Live Draft</div>
+      </div>
+      <div class="card-body">
+        <div class="card-label">Your Input</div>
+        <div class="card-input-preview">Client: Sharma Textiles Pvt Ltd<br>Issue: GSTR-3B mismatch FY 2024-25<br>Amount: ₹2.3 lakhs<br>Task: Client explanation letter</div>
+        <div class="card-label">AI Output</div>
+        <div class="card-output-preview"><strong>✦ Generated in 3 seconds</strong>Dear Mr. Sharma,<br><br>We write with reference to the GSTR-3B discrepancy identified for FY 2024-25. The mismatch of ₹2,30,000 pertains to ITC claimed vs. GSTR-2A reconciliation. We recommend filing a revised return at the earliest to avoid penalty under Section 47...</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">4<span>L+</span></div><div class="stat-label">Practising CAs in India</div></div>
+  <div class="stat"><div class="stat-num">3<span>hrs</span></div><div class="stat-label">Saved per CA per day</div></div>
+  <div class="stat"><div class="stat-num">₹0</div><div class="stat-label">Setup cost</div></div>
+  <div class="stat"><div class="stat-num">15<span>sec</span></div><div class="stat-label">To draft any document</div></div>
+</div>
+
+<!-- ══ AI TOOL ══ -->
+<section class="section reveal" id="tool">
+  <div class="section-tag">Live Demo</div>
+  <h2 class="section-title">Try CAdesk AI Right Now</h2>
+  <p class="section-sub">Select a document type, describe your case, and get a professional draft instantly. No signup required.</p>
+
+  <div class="tool-wrap">
+    <div class="tool-header">
+      <div class="cdot" style="background:#ff5f57;width:11px;height:11px;border-radius:50%"></div>
+      <div class="cdot" style="background:#febc2e;width:11px;height:11px;border-radius:50%"></div>
+      <div class="cdot" style="background:#28c840;width:11px;height:11px;border-radius:50%"></div>
+      <span class="tool-header-title">CAdesk.ai — Document Generator</span>
+    </div>
+    <div class="tool-tabs">
+      <button class="ttab active" onclick="setCATab(this,'gst')">🧾 GST Notice</button>
+      <button class="ttab" onclick="setCATab(this,'audit')">📊 Audit Report</button>
+      <button class="ttab" onclick="setCATab(this,'client')">✉️ Client Email</button>
+      <button class="ttab" onclick="setCATab(this,'advisory')">📋 Tax Advisory</button>
+      <button class="ttab" onclick="setCATab(this,'reply')">🏛️ IT Dept. Reply</button>
+      <button class="ttab" onclick="setCATab(this,'noc')">📜 NOC / Certificate</button>
+    </div>
+    <div class="tool-body">
+      <div class="tool-left">
+        <div>
+          <div class="field-label">Quick Templates</div>
+          <div class="quick-chips" id="caChips"></div>
+        </div>
+        <div>
+          <div class="field-label">Describe Your Case</div>
+          <textarea id="caInput" rows="4" placeholder="Describe your case here..."></textarea>
+        </div>
+        <button class="gen-btn" id="caGenBtn" onclick="runCAI()">
+          <span id="btnText">Generate Document →</span>
+        </button>
+        <div style="font-size:11px;color:var(--muted);text-align:center">Ctrl+Enter to generate</div>
+      </div>
+      <div class="tool-right">
+        <div class="output-label">
+          <span>Generated Draft</span>
+          <button class="copy-tiny" id="caCopyBtn" onclick="copyCA()">Copy</button>
+        </div>
+        <div id="outputBox">
+          <div class="output-placeholder-inner" id="caPlaceholder">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Your professional draft will appear here
+          </div>
+          <div class="typing-dots" id="caTyping">
+            <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+            <span style="font-size:13px;color:var(--muted);margin-left:8px">Drafting document...</span>
+          </div>
+          <div id="caOutputText"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<div style="background:var(--cream)">
+<section class="section reveal" id="features">
+  <div class="section-tag">What's Included</div>
+  <h2 class="section-title">Everything a CA Firm Needs</h2>
+  <div class="feat-grid">
+    <div class="feat-card"><span class="feat-icon">🧾</span><div class="feat-title">GST Notices & Replies</div><div class="feat-desc">Draft responses to GST scrutiny notices, GSTR mismatch letters, and ITC dispute communications in seconds.</div></div>
+    <div class="feat-card"><span class="feat-icon">📊</span><div class="feat-title">Audit Report Drafting</div><div class="feat-desc">Generate structured audit observations, management letters, and CARO report sections automatically.</div></div>
+    <div class="feat-card"><span class="feat-icon">✉️</span><div class="feat-title">Client Communication</div><div class="feat-desc">Professional emails for fee reminders, document requests, deadline alerts, and advisory communications.</div></div>
+    <div class="feat-card"><span class="feat-icon">🏛️</span><div class="feat-title">Income Tax Dept. Replies</div><div class="feat-desc">Draft replies to Section 143(1), 148, and scrutiny notices with legally sound language.</div></div>
+    <div class="feat-card"><span class="feat-icon">📋</span><div class="feat-title">Tax Advisory Letters</div><div class="feat-desc">Write client advisory notes on TDS implications, capital gains, presumptive taxation, and more.</div></div>
+    <div class="feat-card"><span class="feat-icon">📜</span><div class="feat-title">NOC & Certificates</div><div class="feat-desc">Generate No Objection Certificates, net worth certificates, income certificates, and more instantly.</div></div>
+  </div>
+</section>
+</div>
+
+<!-- ══ PRICING ══ -->
+<section class="section reveal" id="pricing">
+  <div class="section-tag">Pricing</div>
+  <h2 class="section-title">Simple, Honest Pricing</h2>
+  <p class="section-sub">Less than what you spend on a client lunch. Cancel anytime. No contracts.</p>
+
+  <div class="pricing-toggle-wrap">
+    <div class="pricing-eyebrow">Select Currency</div>
+    <div class="currency-toggle">
+      <button class="currency-btn" id="inrBtn" onclick="setCurrency('INR')">🇮🇳 INR ₹</button>
+      <button class="currency-btn active" id="usdBtn" onclick="setCurrency('USD')">🌍 USD $</button>
+    </div>
+  </div>
+
+  <div class="pricing-grid">
+
+    <!-- SOLO -->
+    <div class="plan">
+      <div class="plan-inner">
+        <div class="plan-name">Solo</div>
+        <div class="plan-desc">Individual practitioners & article clerks</div>
+        <div class="price-inr" id="solo-inr"><div class="price-amount"><sup>₹</sup>999</div><div class="price-period">per month</div><div class="price-equiv">≈ $12 USD</div></div>
+        <div class="price-usd show" id="solo-usd"><div class="price-amount"><sup>$</sup>12</div><div class="price-period">per month</div><div class="price-equiv">≈ ₹999 INR</div></div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li><span class="pcheck">✓</span> 50 document drafts/month</li>
+          <li><span class="pcheck">✓</span> GST notice replies</li>
+          <li><span class="pcheck">✓</span> Client email templates</li>
+          <li><span class="pcheck">✓</span> Income tax replies</li>
+          <li><span class="pcheck">✓</span> NOC & certificates</li>
+          <li><span class="pcheck">✓</span> Email support</li>
+        </ul>
+        <div class="paypal-label">Pay securely with PayPal</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/12USD" target="_blank" class="pp-btn blue">💳 Pay $12/month</a>
+        <div class="or-line">or</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/999INR" target="_blank" class="pp-btn yellow">Pay ₹999/month</a>
+      </div>
+    </div>
+
+    <!-- FIRM -->
+    <div class="plan featured">
+      <div class="popular-ribbon">⭐ Most Popular</div>
+      <div class="plan-inner">
+        <div class="plan-name">Firm</div>
+        <div class="plan-desc">CA firms with staff & multiple clients</div>
+        <div class="price-inr" id="firm-inr"><div class="price-amount"><sup>₹</sup>2,499</div><div class="price-period">per month</div><div class="price-equiv">≈ $29 USD</div></div>
+        <div class="price-usd show" id="firm-usd"><div class="price-amount"><sup>$</sup>29</div><div class="price-period">per month</div><div class="price-equiv">≈ ₹2,499 INR</div></div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li><span class="pcheck">✓</span> Unlimited document drafts</li>
+          <li><span class="pcheck">✓</span> All Solo features</li>
+          <li><span class="pcheck">✓</span> Audit report drafting</li>
+          <li><span class="pcheck">✓</span> Tax advisory letters</li>
+          <li><span class="pcheck">✓</span> CARO 2020 reporting</li>
+          <li><span class="pcheck">✓</span> 3 team member seats</li>
+          <li><span class="pcheck">✓</span> Priority support</li>
+        </ul>
+        <div class="paypal-label">Pay securely with PayPal</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/29USD" target="_blank" class="pp-btn blue">💳 Pay $29/month</a>
+        <div class="or-line">or</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/2499INR" target="_blank" class="pp-btn yellow">Pay ₹2,499/month</a>
+      </div>
+    </div>
+
+    <!-- ENTERPRISE -->
+    <div class="plan">
+      <div class="plan-inner">
+        <div class="plan-name">Enterprise</div>
+        <div class="plan-desc">Large firms, CA networks & franchises</div>
+        <div class="price-inr" id="ent-inr"><div class="price-amount"><sup>₹</sup>5,999</div><div class="price-period">per month</div><div class="price-equiv">≈ $69 USD</div></div>
+        <div class="price-usd show" id="ent-usd"><div class="price-amount"><sup>$</sup>69</div><div class="price-period">per month</div><div class="price-equiv">≈ ₹5,999 INR</div></div>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li><span class="pcheck">✓</span> Everything in Firm</li>
+          <li><span class="pcheck">✓</span> Unlimited team seats</li>
+          <li><span class="pcheck">✓</span> Custom AI fine-tuning</li>
+          <li><span class="pcheck">✓</span> White-label branding</li>
+          <li><span class="pcheck">✓</span> API access</li>
+          <li><span class="pcheck">✓</span> Dedicated account manager</li>
+        </ul>
+        <div class="paypal-label">Pay securely with PayPal</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/69USD" target="_blank" class="pp-btn blue">💳 Pay $69/month</a>
+        <div class="or-line">or</div>
+        <a href="https://www.paypal.com/paypalme/saifshaikh1q/5999INR" target="_blank" class="pp-btn yellow">Pay ₹5,999/month</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TRUST -->
+<div class="trust-bar reveal">
+  <div class="trust-inner">
+    <div><div class="trust-icon">🔒</div><div class="trust-title">Secure Payments</div><div class="trust-desc">All payments via PayPal. Bank-level encryption.</div></div>
+    <div><div class="trust-icon">🔄</div><div class="trust-title">Cancel Anytime</div><div class="trust-desc">No lock-in. Cancel from your PayPal account.</div></div>
+    <div><div class="trust-icon">🌍</div><div class="trust-title">Works Worldwide</div><div class="trust-desc">CAs in India, UK, UAE, Canada all welcome.</div></div>
+    <div><div class="trust-icon">⚡</div><div class="trust-title">Instant Access</div><div class="trust-desc">Start using immediately after payment.</div></div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div style="background:var(--cream)">
+<section class="section reveal">
+  <div class="section-tag">Trusted by CAs</div>
+  <h2 class="section-title">What Practitioners Say</h2>
+  <div class="testi-grid">
+    <div class="testi-card"><div class="testi-quote">Used to spend 2 hours drafting GST replies. Now it's done in 10 minutes and the quality is better than what my article clerks produce.</div><div class="testi-author">CA Priya Mehta</div><div class="testi-role">Partner, Mehta & Associates, Mumbai</div></div>
+    <div class="testi-card"><div class="testi-quote">The IT notice reply templates are exactly in the language the department expects. My clients are impressed and I save hours every week.</div><div class="testi-author">CA Ramesh Iyer</div><div class="testi-role">Sole Practitioner, Chennai</div></div>
+    <div class="testi-card"><div class="testi-quote">We handle 200+ GST clients. This tool has basically replaced a junior staff member's worth of drafting work. Worth every rupee.</div><div class="testi-author">CA Sunita Agarwal</div><div class="testi-role">Founder, Agarwal Tax Consultants, Delhi</div></div>
+  </div>
+</section>
+</div>
+
+<!-- SEO -->
+<div class="seo-section">
+  <div class="seo-inner">
+    <div class="seo-grid reveal">
+      <div>
+        <h2 class="seo-title">The AI Tool Indian CAs<br>Have Been <em>Waiting For</em></h2>
+        <p class="seo-body">Every day, thousands of CAs across India search for GST notice formats, IT reply templates, and audit letter drafts. CAdesk.ai was built to answer those searches — with AI that understands Indian taxation, ICAI standards, and the language regulators expect.</p>
+        <div class="seo-keywords">
+          <span class="kw-pill">GST notice reply format</span>
+          <span class="kw-pill">Income tax scrutiny reply</span>
+          <span class="kw-pill">Audit report template India</span>
+          <span class="kw-pill">CA client email templates</span>
+          <span class="kw-pill">GSTR mismatch letter</span>
+          <span class="kw-pill">Section 148 reply format</span>
+        </div>
+      </div>
+      <div>
+        <p class="seo-body" style="margin-bottom:24px">CAdesk.ai is trained on Indian tax law, GST regulations, and ICAI guidelines — not generic legal templates from the West. It speaks the language of the Indian CA profession.</p>
+        <p class="seo-body">Start with a free trial. No credit card needed. Cancel anytime. Join hundreds of CA firms already saving hours every week.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-wrap reveal">
+  <div class="faq-heading">Common Questions</div>
+  <div class="faq-item"><div class="faq-q">How do I pay?</div><div class="faq-a">Click any PayPal button. Pay using PayPal balance, debit card, credit card, or UPI-linked PayPal. No PayPal account required — guest checkout works too.</div></div>
+  <div class="faq-item"><div class="faq-q">Can I cancel anytime?</div><div class="faq-a">Yes. Log into PayPal → Payments → Manage automatic payments → Cancel. No questions asked, no fees.</div></div>
+  <div class="faq-item"><div class="faq-q">Is this legal for ICAI registered CAs?</div><div class="faq-a">Yes. CAdesk.ai is a drafting assistant — you review, edit, and sign all documents. Professional responsibility remains with you. Think of it as a very fast, very accurate junior staff member.</div></div>
+  <div class="faq-item"><div class="faq-q">Is my client data safe?</div><div class="faq-a">We do not store any client data you enter. Each session is fully independent. We recommend not entering full PAN numbers or sensitive financial data unnecessarily.</div></div>
+  <div class="faq-item"><div class="faq-q">Can I upgrade or downgrade?</div><div class="faq-a">Yes. Email us and we'll handle the switch within 24 hours with prorated billing.</div></div>
+</div>
+
+<!-- CTA -->
+<div class="cta-banner reveal">
+  <div class="cta-title">Start Saving 3 Hours<br>Every Single Day</div>
+  <p class="cta-sub">Free to try. No credit card. Cancel anytime.</p>
+  <button class="cta-btn" onclick="document.getElementById('tool').scrollIntoView({behavior:'smooth'})">Try CAdesk AI Free →</button>
+</div>
+
+<footer>
+  <div class="footer-logo">CAdesk<span>.</span>ai</div>
+  <div class="footer-links">
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms of Use</a>
+    <a href="#">Contact</a>
+    <a href="#">ICAI Compliance</a>
+  </div>
+  <div class="footer-copy">© 2026 CAdesk.ai — Built for Indian CAs</div>
+</footer>
+
+<script>
+// ── AI TAB DATA ──
+const caTabData = {
+  gst: {
+    chips: ["GSTR-3B mismatch reply","ITC reversal notice","GSTIN cancellation response","E-way bill violation reply"],
+    placeholder: "e.g. Client: XYZ Trading Co. Received SCN for ITC mismatch of ₹3.2 lakhs in GSTR-3B vs GSTR-2A for FY 2024-25. Client has valid purchase invoices. Need reply to GST officer.",
+    system: "You are a senior Indian CA and GST expert with 20 years of practice. Draft professional, legally precise GST notice replies and communications in formal Indian legal language. Include relevant GST sections, rules, and cite circulars/notifications where appropriate. Format with proper headings, reference numbers, and professional closing. Write as if submitting to a GST officer."
+  },
+  audit: {
+    chips: ["Statutory audit report","Tax audit observations","CARO 2020 reporting","Management representation letter"],
+    placeholder: "e.g. Draft a CARO 2020 observation for a manufacturing company where fixed asset register is not maintained properly and physical verification was last done 3 years ago.",
+    system: "You are a senior Indian CA specialising in statutory and tax audits. Draft professional audit reports, management letters, and audit observations in accordance with Standards on Auditing (SAs) issued by ICAI. Use precise audit language, cite relevant SA numbers, and maintain professional audit tone throughout."
+  },
+  client: {
+    chips: ["Fee reminder email","Document collection request","Filing deadline alert","Engagement letter"],
+    placeholder: "e.g. Write a polite but firm fee reminder email to a client who hasn't paid our CA firm's fees of ₹45,000 for the past 3 months of GST compliance work.",
+    system: "You are a professional CA firm communication specialist. Write professional, polished client emails for Indian CA firms. Maintain a respectful yet authoritative tone. Include appropriate subject lines. Balance professionalism with the warm relationship-based nature of Indian CA-client interactions."
+  },
+  advisory: {
+    chips: ["Capital gains advisory","TDS implications note","Presumptive taxation advice","NRI taxation advisory"],
+    placeholder: "e.g. Client sold residential property for ₹95 lakhs (purchased for ₹28 lakhs in 2015). Write an advisory note on LTCG tax implications, indexation benefit, and Section 54 exemption options.",
+    system: "You are a senior Indian tax advisor and CA with expertise in Income Tax Act 1961. Write clear, accurate, and actionable tax advisory letters for Indian clients. Reference relevant sections of the Income Tax Act, CBDT circulars, and recent case laws. Use plain language where possible but maintain professional accuracy. Include a disclaimer that this is advisory in nature."
+  },
+  reply: {
+    chips: ["Section 143(1) intimation reply","Section 148 notice response","Section 139(9) defective return","Penalty u/s 271 reply"],
+    placeholder: "e.g. My client received a Section 148 notice for AY 2022-23 claiming income escaped assessment. Client is salaried with no other income. All taxes paid via TDS. Draft a strong reply.",
+    system: "You are an expert Indian CA in income tax litigation and assessments. Draft formal, legally sound replies to Income Tax Department notices. Reference relevant sections of Income Tax Act 1961, CBDT circulars, and landmark case laws. Use precise legal language appropriate for submission to Assessing Officers. Include all required formalities and a professional closing."
+  },
+  noc: {
+    chips: ["Net worth certificate","No objection certificate","Income certificate","Turnover certificate"],
+    placeholder: "e.g. Draft a Net Worth Certificate for Mr. Anil Sharma with net worth of ₹1.8 crores as on 31 March 2025. Required for bank loan application. PAN: AAAAA0001A.",
+    system: "You are a practising Indian CA drafting formal certificates and NOCs. Write professional certificates in the standard format used by Indian CA firms. Include all required details, certification language, UDIN placeholder, membership number placeholder, firm registration number placeholder, and appropriate CA stamp/seal reference. Follow ICAI guidelines for certification."
+  }
+};
+
+let currentCATab = 'gst';
+
+function setCATab(el, tab) {
+  document.querySelectorAll('.ttab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentCATab = tab;
+  renderChips(tab);
+  document.getElementById('caInput').placeholder = caTabData[tab].placeholder;
+}
+
+function renderChips(tab) {
+  const c = document.getElementById('caChips');
+  c.innerHTML = '';
+  caTabData[tab].chips.forEach(text => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = text;
+    b.onclick = () => { document.getElementById('caInput').value = text; };
+    c.appendChild(b);
+  });
+}
+renderChips('gst');
+
+// ── LIVE AI via Puter.js (free, no API key needed) ──
+async function runCAI() {
+  const input = document.getElementById('caInput').value.trim();
+  if (!input) return;
+  const genBtn = document.getElementById('caGenBtn');
+  const btnText = document.getElementById('btnText');
+  const placeholder = document.getElementById('caPlaceholder');
+  const typing = document.getElementById('caTyping');
+  const outputText = document.getElementById('caOutputText');
+  const copyBtn = document.getElementById('caCopyBtn');
+
+  genBtn.disabled = true;
+  btnText.textContent = 'Drafting...';
+  placeholder.style.display = 'none';
+  outputText.textContent = '';
+  copyBtn.classList.remove('show');
+  typing.classList.add('show');
+
+  const fullPrompt = caTabData[currentCATab].system + '\n\nUser request: ' + input;
+
+  try {
+    const response = await puter.ai.chat(fullPrompt, {model: 'claude-sonnet-4-6'});
+    typing.classList.remove('show');
+    outputText.textContent = response.message.content[0].text;
+    copyBtn.classList.add('show');
+  } catch(err) {
+    typing.classList.remove('show');
+    outputText.textContent = 'Error: ' + err.message;
+  }
+
+  genBtn.disabled = false;
+  btnText.textContent = 'Generate Document →';
+}
+
+// ── DEMO FALLBACK (used only if Puter.js fails) ──
+const demoOutputs = {
+  gst: `REPLY TO SHOW CAUSE NOTICE — INPUT TAX CREDIT MISMATCH
+
+To,
+The Assistant Commissioner of Central Tax,
+GST Bhavan, [Jurisdiction]
+
+Subject: Reply to SCN No. _______ dated _______ — Alleged discrepancy in Input Tax Credit — Regarding.
+
+Sir/Madam,
+
+We, on behalf of M/s [Client Name], GSTIN _____________, respectfully submit this reply to the above-referenced Show Cause Notice received on _________.
+
+GROUNDS OF REPLY:
+
+1. LEGITIMATE AVAILMENT OF ITC UNDER SECTION 16, CGST ACT 2017
+   The Input Tax Credit has been availed strictly in accordance with Section 16(2) of the CGST Act, 2017. All four conditions stand satisfied:
+   (a) Valid tax invoices are in possession of the Noticee [Section 16(2)(a)];
+   (b) Goods/services have been duly received [Section 16(2)(b)];
+   (c) Tax has been paid to the Government by the supplier [Section 16(2)(c)];
+   (d) Return under Section 39 has been duly filed.
+
+2. MISMATCH IN GSTR-2B IS NOT SUFFICIENT GROUND FOR DENIAL
+   A mere mismatch between GSTR-2B and GSTR-3B cannot be the sole basis for denial of legitimately availed ITC. Reference is drawn to:
+   — Hon'ble Supreme Court in Union of India v. Bharti Airtel Ltd. [(2021) 134 taxmann.com 519]
+   — CBDT Circular No. 183/15/2022-GST dated 27.12.2022
+
+3. DOCUMENTS IN SUPPORT
+   Enclosed herewith as Annexure A: copies of purchase invoices, e-way bills, payment records confirming tax payment within 180 days.
+
+In view of the above submissions and supporting documents, we respectfully request that the SCN be dropped and no demand be confirmed against the Noticee.
+
+Thanking you,
+Yours faithfully,
+
+[CA Name], FCA
+M. No. _____________ | UDIN: _____________
+[Firm Name & Registration No.]
+Date: _____________`,
+
+  audit: `INDEPENDENT AUDITOR'S REPORT
+
+To the Members of M/s [Company Name]
+
+Report on the Audit of the Financial Statements
+
+OPINION
+We have audited the financial statements of M/s [Company Name] ("the Company"), which comprise the Balance Sheet as at 31st March 2025, the Statement of Profit and Loss, and the Cash Flow Statement for the year then ended, and notes to the financial statements.
+
+In our opinion and to the best of our information and according to the explanations given to us, the aforesaid financial statements give the information required by the Companies Act, 2013 in the manner so required and give a true and fair view in conformity with the Indian Accounting Standards (Ind AS).
+
+BASIS FOR OPINION
+We conducted our audit in accordance with the Standards on Auditing (SAs) specified under Section 143(10) of the Companies Act, 2013. Our responsibilities under those SAs are further described in the Auditor's Responsibilities section. We are independent of the Company in accordance with the Code of Ethics issued by ICAI.
+
+KEY AUDIT MATTERS
+[To be specified based on significant risks identified during audit]
+
+MANAGEMENT'S RESPONSIBILITY
+The Company's management is responsible for the preparation of these financial statements under Section 134(5) of the Companies Act, 2013.
+
+For [CA Firm Name]
+Chartered Accountants
+Firm Reg. No. _____________
+
+[CA Name], Partner
+M. No. _____________
+UDIN: _____________
+Place: _____________ | Date: _____________`,
+
+  client: `Subject: Reminder — Outstanding Professional Fees — [Client Name]
+
+Dear [Mr./Ms. Client Name],
+
+I hope this message finds you well.
+
+We write to bring to your kind attention that our professional fees of ₹[Amount] pertaining to [services rendered — GST compliance / tax filing / audit] for the period [mention period] remain outstanding as on date.
+
+As per our engagement letter dated _______, payment was due on _______. We would appreciate if the same could be settled at the earliest convenience.
+
+For your reference, the details are as under:
+— Invoice No.: _____________ dated _____________
+— Amount Due: ₹_____________ (inclusive of GST)
+— Due Date: _____________
+
+Kindly arrange payment via NEFT/RTGS to our bank account or by cheque in favour of [Firm Name]. Details enclosed.
+
+We value our professional relationship with you and look forward to your continued association. Please feel free to reach out should you have any queries regarding the above.
+
+Thanking you,
+Yours sincerely,
+
+[CA Name], FCA
+[Firm Name]
+Ph: _____________ | Email: _____________`,
+
+  advisory: `TAX ADVISORY NOTE
+
+To: [Client Name]
+From: [CA Firm Name]
+Date: [Date]
+Subject: Advisory on Tax Implications — [Topic]
+
+DISCLAIMER: This advisory is based on the information provided by you and the provisions of the Income Tax Act, 1961 as currently in force. It is advisory in nature and does not constitute a legal opinion. We recommend verification of facts before acting on this advice.
+
+BACKGROUND
+Based on the information shared by you, we understand that [brief facts of the case].
+
+APPLICABLE PROVISIONS
+1. Section [X] of the Income Tax Act, 1961
+2. CBDT Circular No. _______ dated _______
+3. Relevant case law: [Case Name — Citation]
+
+ANALYSIS
+[Detailed analysis of tax implications based on the specific facts provided]
+
+Long-Term Capital Gains (if applicable): Tax @ 20% with indexation benefit u/s 112, OR @ 12.5% without indexation (post Finance Act 2024 amendments).
+
+RECOMMENDATIONS
+1. [Primary recommendation]
+2. Consider exemption under Section 54/54F if reinvestment in residential property is planned
+3. Advance tax liability to be computed and paid to avoid interest u/s 234B/234C
+
+We remain available to discuss this advisory in detail at your convenience.
+
+For [CA Firm Name]
+[CA Name], FCA | M. No. _____________`,
+
+  reply: `REPLY TO NOTICE UNDER SECTION 148 / 143(1)
+Income Tax Act, 1961
+
+To,
+The Income Tax Officer / Assessing Officer,
+Ward _____, Circle _____,
+[City]
+
+PAN: _____________ | AY: _____________
+
+Subject: Reply to Notice No. _______ dated _______ issued under Section [148/143(1)] of the Income Tax Act, 1961 — Regarding.
+
+Sir/Madam,
+
+I/We, [Name of Assessee], PAN _____________, hereby submit this reply to the above-referenced notice.
+
+SUBMISSION:
+
+1. ALL INCOME DULY DISCLOSED
+   The assessee submits that all income for AY _______ has been duly disclosed in the Return of Income filed on _______ vide Acknowledgement No. _____________.
+
+2. TAX FULLY PAID
+   Tax on the returned income has been fully paid. TDS of ₹_______ has been deducted by the employer/deductor as reflected in Form 26AS and AIS. No additional tax is payable.
+
+3. NO INCOME HAS ESCAPED ASSESSMENT
+   The reasons recorded for reopening do not disclose any tangible material to suggest that income has escaped assessment. Reference is drawn to:
+   — CIT v. Kelvinator of India Ltd. [(2010) 320 ITR 561 (SC)]
+   — GKN Driveshafts (India) Ltd. v. ITO [(2003) 259 ITR 19 (SC)]
+
+PRAYER
+In view of the above, it is respectfully submitted that the notice be dropped and assessment be completed accepting the return as filed.
+
+Enclosures: ITR Acknowledgement, Form 26AS, Form 16, Bank Statements
+
+Yours faithfully,
+[CA Name], FCA | M. No. _____________
+On behalf of [Assessee Name]
+Date: _____________`,
+
+  noc: `CERTIFICATE OF NET WORTH
+(Issued under the Guidelines of the Institute of Chartered Accountants of India)
+
+To Whomsoever It May Concern /
+[Bank Name & Branch]
+
+This is to certify that I have verified the financial records, bank statements, investment documents, and other relevant papers of:
+
+Name: Mr./Ms. _____________
+PAN: _____________
+Address: _____________
+
+Based on my examination of the aforesaid documents and the information provided, I hereby certify that the Net Worth of the above-named individual as on 31st March 2025 is as under:
+
+STATEMENT OF NET WORTH
+
+ASSETS:
+Immovable Property (Market Value)    ₹ ___________
+Investments (Shares/MF/FD)          ₹ ___________
+Bank Balances                        ₹ ___________
+Other Assets                         ₹ ___________
+TOTAL ASSETS (A)                     ₹ ___________
+
+LIABILITIES:
+Outstanding Loans                    ₹ ___________
+Other Liabilities                    ₹ ___________
+TOTAL LIABILITIES (B)                ₹ ___________
+
+NET WORTH (A - B)                    ₹ ___________
+(Rupees _______________ only)
+
+This certificate is issued at the request of the individual for the purpose of [Bank Loan / Visa Application / Tender / other purpose] and should not be used for any other purpose.
+
+For [CA Firm Name]
+Chartered Accountants
+Firm Reg. No. _____________
+
+[CA Name], FCA / ACA
+Membership No. _____________
+UDIN: _____________ (to be generated on ICAI portal)
+Place: _____________ | Date: _____________`
+};
+
+// demo outputs kept as fallback reference above
+
+function copyCA() {
+  navigator.clipboard.writeText(document.getElementById('caOutputText').textContent).then(() => {
+    const b = document.getElementById('caCopyBtn');
+    b.textContent = '✓ Copied';
+    setTimeout(() => { b.textContent = 'Copy'; }, 2000);
+  });
+}
+
+document.getElementById('caInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) runCAI();
+});
+
+// ── CURRENCY TOGGLE ──
+function setCurrency(cur) {
+  ['solo','firm','ent'].forEach(p => {
+    document.getElementById(p+'-inr').classList.toggle('show', cur==='INR');
+    document.getElementById(p+'-usd').classList.toggle('show', cur==='USD');
+  });
+  document.getElementById('inrBtn').classList.toggle('active', cur==='INR');
+  document.getElementById('usdBtn').classList.toggle('active', cur==='USD');
+}
+setCurrency('USD');
+
+// ── SCROLL REVEAL ──
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
