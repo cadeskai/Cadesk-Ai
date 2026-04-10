@@ -675,17 +675,44 @@ function renderChips(tab) {
 }
 renderChips('gst');
 
-// ── PAYWALL ──
-let usesLeft = 3;
+// ── PAYWALL — persists across sessions via localStorage ──
+const STORAGE_KEY = 'cadesk_uses';
+const MAX_FREE = 3;
+
+function getUsesLeft() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === null) return MAX_FREE;
+  return Math.max(0, MAX_FREE - parseInt(stored));
+}
+
+function incrementUses() {
+  const used = parseInt(localStorage.getItem(STORAGE_KEY) || '0');
+  localStorage.setItem(STORAGE_KEY, used + 1);
+}
+
+function usesLeft() {
+  return getUsesLeft();
+}
+
+// On page load — if already used up, lock the button immediately
+window.addEventListener('DOMContentLoaded', () => {
+  const left = getUsesLeft();
+  const genBtn = document.getElementById('caGenBtn');
+  const btnText = document.getElementById('btnText');
+  if (left <= 0) {
+    btnText.textContent = '🔒 Upgrade to Generate';
+    genBtn.style.background = '#b8860b';
+  } else if (left < MAX_FREE) {
+    btnText.textContent = `Generate Document (${left} free left)`;
+  }
+});
 
 function showPaywall() {
-  const m = document.getElementById('paywallModal');
-  m.style.display = 'flex';
+  document.getElementById('paywallModal').style.display = 'flex';
 }
 function closePaywall() {
   document.getElementById('paywallModal').style.display = 'none';
 }
-// Close if clicking outside modal box
 document.getElementById('paywallModal').addEventListener('click', function(e) {
   if (e.target === this) closePaywall();
 });
@@ -695,8 +722,8 @@ async function runCAI() {
   const input = document.getElementById('caInput').value.trim();
   if (!input) return;
 
-  // Check uses
-  if (usesLeft <= 0) { showPaywall(); return; }
+  // Check uses from localStorage
+  if (getUsesLeft() <= 0) { showPaywall(); return; }
 
   const genBtn = document.getElementById('caGenBtn');
   const btnText = document.getElementById('btnText');
@@ -737,15 +764,18 @@ async function runCAI() {
   outputText.textContent = output;
   copyBtn.classList.add('show');
 
-  // Deduct use and update button
-  usesLeft--;
-  if (usesLeft > 0) {
-    genBtn.disabled = false;
-    btnText.textContent = `Generate Document (${usesLeft} free left)`;
-  } else {
+  // Save use to localStorage
+  incrementUses();
+  const left = getUsesLeft();
+
+  if (left <= 0) {
     genBtn.disabled = false;
     btnText.textContent = '🔒 Upgrade to Generate More';
     genBtn.style.background = '#b8860b';
+    genBtn.onclick = () => showPaywall();
+  } else {
+    genBtn.disabled = false;
+    btnText.textContent = `Generate Document (${left} free left)`;
   }
 }
 
