@@ -274,7 +274,9 @@ footer { background: var(--ink); border-top: 1px solid #222; padding: 40px 48px;
     <a href="#tool">Try Free</a>
     <a href="#features">Features</a>
     <a href="#pricing">Pricing</a>
-    <a href="#pricing" class="nav-cta">Get Started</a>
+    <div id="authArea">
+      <a href="#pricing" class="nav-cta" id="signInBtn" onclick="signInWithGoogle(); return false;">Sign in with Google</a>
+    </div>
   </div>
 </nav>
 
@@ -618,8 +620,9 @@ footer { background: var(--ink); border-top: 1px solid #222; padding: 40px 48px;
   <div class="footer-copy">© 2026 CAdesk.ai — Built for Indian CAs</div>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
-// ── AI TAB DATA ──
 const caTabData = {
   gst: {
     chips: ["GSTR-3B mismatch reply","ITC reversal notice","GSTIN cancellation response","E-way bill violation reply"],
@@ -722,8 +725,8 @@ async function runCAI() {
   const input = document.getElementById('caInput').value.trim();
   if (!input) return;
 
-  // Check uses from localStorage
-  if (getUsesLeft() <= 0) { showPaywall(); return; }
+  // Check plan access
+  if (!checkPlanAccess()) return;
 
   const genBtn = document.getElementById('caGenBtn');
   const btnText = document.getElementById('btnText');
@@ -1019,6 +1022,174 @@ const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ══════════════════════════════════════════
+// ── FIREBASE GOOGLE LOGIN + PLAN ACCESS ──
+// ══════════════════════════════════════════
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyC8eFrz6kTPBdTWgd-wre4NXi8Tgt1FvJQ",
+  authDomain: "cadesk-ai.firebaseapp.com",
+  projectId: "cadesk-ai",
+  storageBucket: "cadesk-ai.firebasestorage.app",
+  messagingSenderId: "612186152691",
+  appId: "1:612186152691:web:22b7d0b9f2b460b5a2e186"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// ── PAID USERS LIST ──
+// Add client email here after they pay
+// Format: 'email': 'plan'
+const paidUsers = {
+  // SOLO PLAN (₹999/month)
+  // 'example@gmail.com': 'solo',
+
+  // FIRM PLAN (₹2499/month)
+  // 'example@gmail.com': 'firm',
+
+  // ENTERPRISE PLAN (₹5999/month)
+  // 'example@gmail.com': 'enterprise',
+};
+
+// Plan limits
+const planLimits = {
+  free: 3,
+  solo: 50,
+  firm: 999999,
+  enterprise: 999999
+};
+
+let currentUser = null;
+let userPlan = 'free';
+
+// Sign in with Google
+function signInWithGoogle() {
+  auth.signInWithPopup(provider).catch(err => {
+    console.error('Login error:', err);
+    alert('Sign in failed. Please try again.');
+  });
+}
+
+// Sign out
+function signOut() {
+  auth.signOut();
+}
+
+// Auth state listener — runs whenever login state changes
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  const authArea = document.getElementById('authArea');
+
+  if (user) {
+    // Check if paid user
+    const email = user.email.toLowerCase();
+    userPlan = paidUsers[email] || 'free';
+
+    // Update nav — show user photo + name + signout
+    authArea.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <img src="${user.photoURL}" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--gold);" onerror="this.style.display='none'">
+        <span style="font-size:13px;color:var(--text);font-weight:500;">${user.displayName?.split(' ')[0]}</span>
+        ${userPlan !== 'free' ? `<span style="background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;">${userPlan}</span>` : ''}
+        <button onclick="signOut()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">Sign out</button>
+      </div>`;
+
+    // Update generate button based on plan
+    updateButtonForPlan();
+
+    // Show welcome toast if paid
+    if (userPlan !== 'free') {
+      showToast(`Welcome back! You have ${userPlan === 'solo' ? '50 drafts/month' : 'unlimited drafts'} 🎉`);
+    }
+
+  } else {
+    // Not logged in — show sign in button
+    currentUser = null;
+    userPlan = 'free';
+    authArea.innerHTML = `<a href="#" class="nav-cta" onclick="signInWithGoogle(); return false;">Sign in with Google</a>`;
+    updateButtonForPlan();
+  }
+});
+
+function updateButtonForPlan() {
+  const genBtn = document.getElementById('caGenBtn');
+  const btnText = document.getElementById('btnText');
+  if (!genBtn) return;
+
+  if (userPlan === 'firm' || userPlan === 'enterprise') {
+    genBtn.style.background = 'var(--green)';
+    btnText.textContent = 'Generate Document — Unlimited ✓';
+    genBtn.disabled = false;
+    genBtn.onclick = runCAI;
+  } else if (userPlan === 'solo') {
+    genBtn.style.background = 'var(--ink)';
+    btnText.textContent = 'Generate Document (50/month)';
+    genBtn.disabled = false;
+    genBtn.onclick = runCAI;
+  } else {
+    // Free user — check localStorage
+    const left = getUsesLeft();
+    if (left <= 0) {
+      btnText.textContent = '🔒 Upgrade to Generate More';
+      genBtn.style.background = '#b8860b';
+    } else {
+      genBtn.style.background = 'var(--ink)';
+      btnText.textContent = left < 3 ? `Generate Document (${left} free left)` : 'Generate Document →';
+    }
+  }
+}
+
+// Check plan before generating
+function checkPlanAccess() {
+  if (userPlan === 'firm' || userPlan === 'enterprise') return true;
+  if (userPlan === 'solo') return true; // solo limit handled separately
+  // Free user
+  if (getUsesLeft() <= 0) {
+    if (!currentUser) {
+      // Not logged in — show sign in first
+      showLoginPrompt();
+    } else {
+      showPaywall();
+    }
+    return false;
+  }
+  return true;
+}
+
+// Login prompt modal
+function showLoginPrompt() {
+  const existing = document.getElementById('loginPrompt');
+  if (existing) { existing.style.display = 'flex'; return; }
+
+  const div = document.createElement('div');
+  div.id = 'loginPrompt';
+  div.style.cssText = 'display:flex;position:fixed;inset:0;z-index:9998;background:rgba(15,14,11,0.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;';
+  div.innerHTML = `
+    <div style="background:#f5f2eb;border-radius:16px;padding:48px 40px;max-width:420px;width:90%;text-align:center;position:relative;box-shadow:0 32px 80px rgba(0,0,0,0.4);">
+      <div style="font-size:40px;margin-bottom:16px;">👋</div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#0f0e0b;letter-spacing:-1px;margin-bottom:12px;">You've used your 3 free drafts!</div>
+      <div style="font-size:14px;color:#6b6560;margin-bottom:24px;line-height:1.6;">Sign in with Google to keep track of your usage,<br>then upgrade to get unlimited access.</div>
+      <button onclick="signInWithGoogle();document.getElementById('loginPrompt').style.display='none';" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;border:1.5px solid #d4cfc5;color:#1a1816;padding:14px;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;margin-bottom:12px;">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <button onclick="document.getElementById('loginPrompt').style.display='none';showPaywall();" style="width:100%;background:transparent;border:none;color:#6b6560;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;">Or upgrade directly →</button>
+      <button onclick="document.getElementById('loginPrompt').style.display='none';" style="position:absolute;top:16px;right:20px;background:none;border:none;font-size:20px;color:#b0a898;cursor:pointer;">✕</button>
+    </div>`;
+  document.body.appendChild(div);
+}
+
+// Toast notification
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f0e0b;color:#f5f2eb;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.3);';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
 </script>
 </body>
 </html>
