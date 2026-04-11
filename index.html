@@ -244,8 +244,11 @@ footer { background: var(--ink); border-top: 1px solid #222; padding: 40px 48px;
 
 /* ── RESPONSIVE ── */
 @media(max-width:900px) {
-  nav { padding: 14px 20px; }
-  .nav-links { gap: 16px; }
+  nav { padding: 12px 20px; }
+  .nav-links { gap: 10px; }
+  .nav-links a:not(.nav-cta):not(#authArea a) { display: none; }
+  #authArea { display: flex; align-items: center; }
+  .nav-cta { padding: 8px 14px; font-size: 11px !important; letter-spacing: 0.3px; white-space: nowrap; }
   .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; gap: 40px; }
   .hero-right { display: none; }
   .stats-bar { padding: 28px 20px; gap: 28px; }
