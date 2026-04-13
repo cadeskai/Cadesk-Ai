@@ -835,7 +835,7 @@ async function generateDoc() {
     const data = await response.json();
     typing.classList.remove('show');
 
-    const text = data?.content?.[0]?.text || data?.error || 'Something went wrong. Please try again.';
+    const text = data?.content?.[0]?.text || data?.error?.message || data?.error || JSON.stringify(data) || 'Something went wrong. Please try again.';
     outputText.textContent = text;
     copyBtn.classList.add('show');
     incrementUses();
