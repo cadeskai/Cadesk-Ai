@@ -1,277 +1,688 @@
-here<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAdesk.ai — CA Practice Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>CAdesk.ai — AI Practice Management for Indian CAs</title>
+<meta name="description" content="The complete AI-powered practice management tool for Indian Chartered Accountants. Draft documents, manage clients, track deadlines and payments.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
+/* ══════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════ */
 :root {
+  --sidebar-w: 248px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 0.2s ease;
+
+  /* Light Theme */
+  --bg: #f4f1ea;
+  --bg2: #edeae1;
+  --surface: #ffffff;
+  --surface2: #f9f7f2;
   --ink: #0f0e0b;
-  --paper: #f5f2eb;
-  --cream: #ede9df;
-  --gold: #b8860b;
-  --gold-light: #d4a017;
   --text: #1a1816;
   --muted: #6b6560;
-  --border: #d4cfc5;
-  --surface: #ffffff;
+  --border: #d8d3c8;
+  --sidebar-bg: #0f0e0b;
+  --sidebar-text: #f4f1ea;
+  --sidebar-muted: #666;
+  --sidebar-active: #1a1816;
+  --sidebar-border: #222;
+  --gold: #b8860b;
+  --gold-light: #d4a017;
+  --gold-bg: #fff8e1;
+  --gold-border: #e8d9b0;
   --green: #1a7a4a;
+  --green-bg: #e8f5e9;
   --red: #c0392b;
+  --red-bg: #fde8e8;
   --blue: #1a4a7a;
-  --sidebar-w: 240px;
+  --blue-bg: #e3f2fd;
+  --shadow-sm: 0 1px 4px rgba(15,14,11,0.06);
+  --shadow: 0 4px 16px rgba(15,14,11,0.08);
+  --shadow-lg: 0 12px 40px rgba(15,14,11,0.12);
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-body { background:var(--cream); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:14px; line-height:1.6; display:flex; min-height:100vh; }
 
-/* ── SIDEBAR ── */
+[data-theme="dark"] {
+  --bg: #0d0d0d;
+  --bg2: #141414;
+  --surface: #1a1a1a;
+  --surface2: #1f1f1f;
+  --ink: #f4f1ea;
+  --text: #e8e4dc;
+  --muted: #888;
+  --border: #2a2a2a;
+  --sidebar-bg: #111;
+  --sidebar-text: #e8e4dc;
+  --sidebar-muted: #555;
+  --sidebar-active: #1f1f1f;
+  --sidebar-border: #222;
+  --gold-bg: #1a1500;
+  --gold-border: #3a2f00;
+  --green-bg: #0a1f12;
+  --red-bg: #1f0a0a;
+  --blue-bg: #0a1220;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.3);
+  --shadow: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+}
+
+/* ══════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:14px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  line-height: 1.6;
+  display: flex;
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+}
+button { cursor: pointer; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+
+/* ══════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════ */
 .sidebar {
-  width:var(--sidebar-w); background:var(--ink); position:fixed; top:0; left:0; bottom:0;
-  display:flex; flex-direction:column; z-index:100; overflow-y:auto;
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  position: fixed; top:0; left:0; bottom:0;
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow-y: auto;
+  transition: transform var(--transition), background var(--transition);
 }
-.sidebar-logo { padding:24px 20px; border-bottom:1px solid #222; }
-.sidebar-logo .logo { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--paper); }
-.sidebar-logo .logo span { color:var(--gold); }
-.sidebar-logo .tagline { font-size:11px; color:#666; margin-top:2px; letter-spacing:0.5px; }
-.sidebar-nav { padding:16px 0; flex:1; }
-.nav-section { padding:8px 20px 4px; font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#444; }
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--sidebar-border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700;
+  color: var(--sidebar-text);
+}
+.logo-text span { color: var(--gold); }
+.logo-badge {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  background: var(--gold); color: var(--ink);
+  padding: 2px 7px; border-radius: 3px;
+}
+.sidebar-section {
+  padding: 16px 20px 6px;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--sidebar-muted);
+}
 .nav-item {
-  display:flex; align-items:center; gap:10px; padding:10px 20px;
-  color:#888; font-size:13px; font-weight:500; cursor:pointer;
-  transition:all 0.2s; border-left:3px solid transparent;
-  text-decoration:none;
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  color: var(--sidebar-muted);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all var(--transition);
+  border-right: none; border-top: none; border-bottom: none;
+  background: none; width: 100%; text-align: left;
 }
-.nav-item:hover { color:var(--paper); background:#1a1816; }
-.nav-item.active { color:var(--paper); background:#1a1816; border-left-color:var(--gold); }
-.nav-item .icon { font-size:16px; width:20px; text-align:center; }
-.sidebar-footer { padding:16px 20px; border-top:1px solid #222; }
-.user-pill { display:flex; align-items:center; gap:10px; }
-.user-avatar { width:32px; height:32px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--ink); flex-shrink:0; }
-.user-name { font-size:13px; color:var(--paper); font-weight:500; }
-.user-plan { font-size:10px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; }
+.nav-item:hover { color: var(--sidebar-text); background: rgba(255,255,255,0.04); }
+.nav-item.active { color: var(--sidebar-text); background: var(--sidebar-active); border-left-color: var(--gold); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--red); color: white;
+  font-size: 10px; font-weight: 700;
+  padding: 1px 6px; border-radius: 10px;
+}
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--sidebar-border);
+}
+.user-info { display: flex; align-items: center; gap: 10px; }
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--gold); color: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.user-name { font-size: 13px; font-weight: 600; color: var(--sidebar-text); }
+.user-plan { font-size: 10px; color: var(--gold); letter-spacing: 0.5px; }
 
-/* ── MAIN ── */
-.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+/* ══════════════════════════════════════
+   MAIN
+══════════════════════════════════════ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  transition: margin var(--transition);
+}
+
+/* TOPBAR */
 .topbar {
-  background:rgba(245,242,235,0.95); backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border); padding:14px 32px;
-  display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0; z-index:50;
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(244,241,234,0.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background var(--transition), border-color var(--transition);
 }
-.page-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--ink); }
-.topbar-right { display:flex; align-items:center; gap:12px; }
-.badge { background:var(--gold); color:var(--ink); font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; letter-spacing:1px; text-transform:uppercase; }
-.content { padding:28px 32px; flex:1; }
+[data-theme="dark"] .topbar { background: rgba(13,13,13,0.92); }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.menu-btn {
+  display: none;
+  background: none; border: none; font-size: 20px;
+  color: var(--text); padding: 4px;
+}
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; font-weight: 700; color: var(--ink);
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 500;
+  transition: all var(--transition);
+  display: flex; align-items: center; gap: 6px;
+}
+.topbar-btn:hover { border-color: var(--gold); color: var(--gold); }
+.drafts-badge {
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  color: var(--gold);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 600;
+}
 
-/* ── PANELS ── */
-.panel { display:none; }
-.panel.active { display:block; }
+/* CONTENT */
+.content { padding: 24px 28px; flex: 1; }
+.panel { display: none; animation: panelIn 0.3s ease; }
+.panel.active { display: block; }
+@keyframes panelIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-/* ── STATS ROW ── */
-.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
-.stat-card .label { font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-.stat-card .value { font-family:'Playfair Display',serif; font-size:32px; font-weight:700; color:var(--ink); line-height:1; }
-.stat-card .value span { color:var(--gold); }
-.stat-card .sub { font-size:12px; color:var(--muted); margin-top:4px; }
-.stat-card.green { border-left:3px solid var(--green); }
-.stat-card.gold { border-left:3px solid var(--gold); }
-.stat-card.red { border-left:3px solid var(--red); }
-.stat-card.blue { border-left:3px solid var(--blue); }
+/* ══════════════════════════════════════
+   COMPONENTS
+══════════════════════════════════════ */
 
-/* ── GRID 2COL ── */
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), border-color var(--transition);
+}
+.card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; font-weight: 700; color: var(--ink);
+}
+.card-body { padding: 20px; }
 
-/* ── CARD ── */
-.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-.card-head { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-.card-head-title { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; color:var(--ink); }
-.card-body { padding:20px; }
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border-left: 3px solid transparent;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+}
+.stat-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.stat-card.gold { border-left-color: var(--gold); }
+.stat-card.green { border-left-color: var(--green); }
+.stat-card.red { border-left-color: var(--red); }
+.stat-card.blue { border-left-color: var(--blue); }
+.stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1; }
+.stat-value span { color: var(--gold); }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-/* ── AI TOOL ── */
-.tool-tabs { display:flex; border-bottom:1px solid var(--border); overflow-x:auto; background:var(--cream); padding:0 20px; }
-.ttab { padding:12px 16px; font-size:12px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; background:none; border-top:none; border-left:none; border-right:none; font-family:'IBM Plex Sans',sans-serif; transition:all 0.2s; }
-.ttab.active { color:var(--ink); border-bottom-color:var(--gold); font-weight:600; }
-.tool-grid { display:grid; grid-template-columns:1fr 1fr; min-height:360px; }
-.tool-left { padding:20px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:12px; }
-.tool-right { padding:20px; background:#fffdf7; display:flex; flex-direction:column; }
-.field-label { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-.chips { display:flex; flex-wrap:wrap; gap:6px; }
-.chip { background:var(--cream); border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:3px; font-size:11px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:all 0.15s; }
-.chip:hover { border-color:var(--gold); color:var(--gold); }
-textarea#aiInput { width:100%; background:var(--cream); border:1.5px solid var(--border); border-radius:6px; padding:12px 14px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; outline:none; resize:none; min-height:100px; line-height:1.6; transition:border-color 0.2s; }
-textarea#aiInput:focus { border-color:var(--gold); }
-textarea#aiInput::placeholder { color:#b0a898; }
-.gen-btn { background:var(--ink); color:var(--paper); border:none; border-radius:6px; padding:11px 20px; font-weight:600; font-size:13px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:background 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
-.gen-btn:hover { background:#2a2720; }
-.gen-btn:disabled { opacity:0.45; cursor:not-allowed; }
-.output-box { flex:1; background:white; border:1.5px solid var(--border); border-radius:6px; padding:16px; font-size:13px; line-height:1.75; color:var(--text); overflow-y:auto; white-space:pre-wrap; min-height:180px; }
-.output-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; color:#c5bfb4; font-size:12px; text-align:center; }
-.typing-dots { display:none; gap:4px; align-items:center; padding:8px 0; }
-.typing-dots.show { display:flex; }
-.tdot { width:6px; height:6px; background:var(--gold); border-radius:50%; animation:tdot 1.2s infinite; }
+/* Grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  border: none;
+  transition: all var(--transition);
+}
+.btn-primary { background: var(--ink); color: var(--bg); }
+.btn-primary:hover { background: #2a2720; transform: translateY(-1px); }
+.btn-gold { background: var(--gold); color: white; }
+.btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+.btn-outline { background: transparent; border: 1.5px solid var(--border) !important; color: var(--text); }
+.btn-outline:hover { border-color: var(--gold) !important; color: var(--gold); }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover { opacity: 0.85; }
+.btn-red { background: var(--red); color: white; }
+.btn-danger { background: transparent; border: 1px solid var(--red) !important; color: var(--red); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-xs { padding: 4px 10px; font-size: 11px; }
+
+/* Form */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.form-input {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition), background var(--transition);
+  width: 100%;
+}
+.form-input:focus { border-color: var(--gold); background: var(--surface); }
+.form-input::placeholder { color: #bbb; }
+textarea.form-input { resize: vertical; min-height: 80px; line-height: 1.5; }
+select.form-input { cursor: pointer; }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; padding: 11px 16px;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border);
+  background: var(--surface2);
+}
+td { padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+.empty-row td { text-align: center; color: var(--muted); padding: 40px; }
+
+/* Badges/Pills */
+.pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.pill-green { background: var(--green-bg); color: var(--green); }
+.pill-gold { background: var(--gold-bg); color: var(--gold); }
+.pill-red { background: var(--red-bg); color: var(--red); }
+.pill-blue { background: var(--blue-bg); color: var(--blue); }
+.pill-grey { background: var(--bg2); color: var(--muted); }
+
+/* Search */
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  transition: border-color var(--transition);
+}
+.search-box:focus-within { border-color: var(--gold); }
+.search-box input { background: none; border: none; outline: none; font-size: 13px; color: var(--text); flex: 1; }
+.search-box input::placeholder { color: var(--muted); }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab {
+  padding: 11px 16px; font-size: 12px; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  background: none; border-top: none; border-left: none; border-right: none;
+  transition: all var(--transition);
+}
+.tab.active { color: var(--ink); border-bottom-color: var(--gold); font-weight: 600; }
+.tab:hover { color: var(--text); }
+
+/* Quick chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--muted); padding: 4px 11px;
+  border-radius: 3px; font-size: 11px;
+  transition: all var(--transition);
+  border-top: none; border-left: none; border-right: none;
+}
+.chip { border: 1px solid var(--border); }
+.chip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+
+/* Typing dots */
+.typing { display: none; gap: 4px; align-items: center; padding: 8px 0; }
+.typing.show { display: flex; }
+.tdot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: tdot 1.2s infinite; }
 .tdot:nth-child(2){animation-delay:.2s} .tdot:nth-child(3){animation-delay:.4s}
-@keyframes tdot{0%,80%,100%{transform:scale(0.6);opacity:0.5}40%{transform:scale(1);opacity:1}}
-.copy-btn { display:none; background:var(--cream); border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:3px; font-size:11px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:all 0.15s; margin-top:8px; }
-.copy-btn.show { display:inline; }
-.copy-btn:hover { border-color:var(--gold); color:var(--gold); }
-.drafts-left { font-size:11px; color:var(--muted); text-align:center; margin-top:4px; }
+@keyframes tdot { 0%,80%,100%{transform:scale(0.6);opacity:0.5} 40%{transform:scale(1);opacity:1} }
 
-/* ── CLIENTS TABLE ── */
-.table-wrap { overflow-x:auto; }
-table { width:100%; border-collapse:collapse; }
-th { text-align:left; font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); padding:10px 16px; border-bottom:2px solid var(--border); }
-td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:13px; color:var(--text); vertical-align:middle; }
-tr:last-child td { border-bottom:none; }
-tr:hover td { background:#fffdf7; }
-.status-pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; letter-spacing:0.5px; }
-.status-active { background:#e8f5e9; color:#1a7a4a; }
-.status-pending { background:#fff8e1; color:#b8860b; }
-.status-overdue { background:#fde8e8; color:#c0392b; }
-.action-btn { background:none; border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:all 0.15s; }
-.action-btn:hover { border-color:var(--gold); color:var(--gold); }
-
-/* ── DEADLINES ── */
-.deadline-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
-.deadline-item:last-child { border-bottom:none; }
-.deadline-date { width:48px; height:48px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; }
-.deadline-date.red { background:#fde8e8; }
-.deadline-date.gold { background:#fff8e1; }
-.deadline-date.green { background:#e8f5e9; }
-.deadline-date .day { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; line-height:1; }
-.deadline-date.red .day { color:var(--red); }
-.deadline-date.gold .day { color:var(--gold); }
-.deadline-date.green .day { color:var(--green); }
-.deadline-date .month { font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
-.deadline-date.red .month { color:var(--red); }
-.deadline-date.gold .month { color:var(--gold); }
-.deadline-date.green .month { color:var(--green); }
-.deadline-info { flex:1; }
-.deadline-title { font-weight:600; font-size:13px; color:var(--ink); }
-.deadline-client { font-size:12px; color:var(--muted); }
-.deadline-tag { font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; }
-.tag-gst { background:#e3f2fd; color:#1a4a7a; }
-.tag-it { background:#fce4ec; color:#880e4f; }
-.tag-audit { background:#f3e5f5; color:#4a148c; }
-.tag-roc { background:#e8f5e9; color:#1a7a4a; }
-
-/* ── ADD CLIENT FORM ── */
-.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.form-group { display:flex; flex-direction:column; gap:6px; }
-.form-group label { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
-.form-input { background:var(--cream); border:1.5px solid var(--border); border-radius:6px; padding:10px 14px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
-.form-input:focus { border-color:var(--gold); }
-.form-input::placeholder { color:#b0a898; }
-select.form-input { cursor:pointer; }
-.submit-btn { background:var(--ink); color:var(--paper); border:none; border-radius:6px; padding:11px 24px; font-weight:600; font-size:13px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:background 0.2s; }
-.submit-btn:hover { background:#2a2720; }
-
-/* ── BULK TOOL ── */
-.bulk-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-.bulk-card { background:var(--cream); border:1.5px solid var(--border); border-radius:8px; padding:16px; cursor:pointer; transition:all 0.2s; text-align:center; }
-.bulk-card:hover { border-color:var(--gold); background:#fff8e1; }
-.bulk-card.selected { border-color:var(--gold); background:#fff8e1; }
-.bulk-icon { font-size:24px; margin-bottom:8px; }
-.bulk-title { font-size:13px; font-weight:600; color:var(--ink); }
-.bulk-desc { font-size:11px; color:var(--muted); margin-top:3px; }
-
-/* ── WHATSAPP TEMPLATES ── */
-.wa-template { background:var(--cream); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:12px; position:relative; }
-.wa-template-title { font-size:12px; font-weight:600; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
-.wa-template-body { font-size:13px; color:var(--text); line-height:1.65; white-space:pre-wrap; }
-.wa-copy-btn { position:absolute; top:12px; right:12px; background:var(--surface); border:1px solid var(--border); color:var(--muted); padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; }
-.wa-copy-btn:hover { border-color:var(--gold); color:var(--gold); }
-
-/* ── PAYWALL ── */
-#paywallModal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,14,11,0.85); backdrop-filter:blur(8px); align-items:center; justify-content:center; }
-#paywallModal.show { display:flex; }
-
-/* ── MOBILE ── */
-.mobile-menu-btn { display:none; background:none; border:none; font-size:22px; cursor:pointer; color:var(--ink); }
-@media(max-width:768px) {
-  .sidebar { transform:translateX(-100%); transition:transform 0.3s; }
-  .sidebar.open { transform:translateX(0); }
-  .main { margin-left:0; }
-  .mobile-menu-btn { display:block; }
-  .stats-row { grid-template-columns:1fr 1fr; }
-  .grid2, .tool-grid, .form-grid, .bulk-grid { grid-template-columns:1fr; }
-  .content { padding:20px 16px; }
-  .topbar { padding:12px 16px; }
+/* Output box */
+.output-box {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px; font-size: 13px; line-height: 1.75;
+  color: var(--text); overflow-y: auto;
+  white-space: pre-wrap; min-height: 200px;
+  transition: background var(--transition);
+  font-family: 'IBM Plex Mono', monospace;
 }
+.output-placeholder {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 180px; gap: 10px;
+  color: var(--muted); font-size: 12px; text-align: center;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* Deadline items */
+.deadline-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.deadline-item:last-child { border-bottom: none; }
+.deadline-date { width: 46px; height: 46px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+.deadline-day { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; line-height: 1; }
+.deadline-month { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.dl-red { background: var(--red-bg); }
+.dl-red .deadline-day, .dl-red .deadline-month { color: var(--red); }
+.dl-gold { background: var(--gold-bg); }
+.dl-gold .deadline-day, .dl-gold .deadline-month { color: var(--gold); }
+.dl-green { background: var(--green-bg); }
+.dl-green .deadline-day, .dl-green .deadline-month { color: var(--green); }
+.deadline-info { flex: 1; }
+.deadline-title { font-weight: 600; font-size: 13px; color: var(--ink); }
+.deadline-desc { font-size: 11px; color: var(--muted); }
+
+/* WA templates */
+.wa-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 12px; position: relative; }
+.wa-title { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.wa-body { font-size: 12.5px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
+
+/* Divider */
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* Section gap */
+.mb16 { margin-bottom: 16px; }
+.mb20 { margin-bottom: 20px; }
+.mb24 { margin-bottom: 24px; }
+.mt16 { margin-top: 16px; }
+.mt20 { margin-top: 20px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-gap { display: flex; align-items: center; gap: 10px; }
+.text-muted { color: var(--muted); font-size: 12px; }
+.section-tag { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.5px; }
+.section-sub { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink); color: var(--bg);
+  padding: 12px 24px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  z-index: 9999; box-shadow: var(--shadow-lg);
+  transition: transform 0.3s ease;
+  white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Paywall Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9998;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border-radius: 16px; padding: 40px 36px;
+  max-width: 460px; width: 90%;
+  text-align: center; position: relative;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn 0.3s ease;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+.modal-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; font-size: 20px;
+  color: var(--muted); cursor: pointer;
+  transition: color var(--transition);
+}
+.modal-close:hover { color: var(--text); }
+
+/* Security banner */
+.security-banner {
+  background: var(--green-bg);
+  border: 1px solid #a5d6a7;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--green);
+  font-weight: 500; margin-bottom: 20px;
+}
+
+/* Pricing cards */
+.pricing-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px; position: relative;
+  transition: all var(--transition);
+}
+.pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.pricing-card.featured { background: var(--ink); border-color: var(--ink); }
+.pricing-card.featured * { color: inherit; }
+.pricing-amount {
+  font-family: 'Playfair Display', serif;
+  font-size: 44px; font-weight: 900;
+  letter-spacing: -2px; line-height: 1;
+  color: var(--ink);
+}
+.pricing-card.featured .pricing-amount { color: var(--bg); }
+.pricing-period { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.pricing-card.featured .pricing-period { color: #888; }
+.pricing-features { list-style: none; margin: 20px 0; }
+.pricing-features li {
+  font-size: 13px; color: var(--muted); padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.pricing-card.featured .pricing-features li { color: #bbb; border-bottom-color: #222; }
+.pricing-features li:last-child { border-bottom: none; }
+.pricing-check { color: var(--gold); font-weight: 700; }
+
+/* Trust pages */
+.trust-page { max-width: 720px; margin: 0 auto; }
+.trust-page h1 { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--ink); margin-bottom: 8px; letter-spacing: -1px; }
+.trust-page h2 { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--ink); margin: 24px 0 8px; }
+.trust-page p { font-size: 14px; color: var(--muted); line-height: 1.8; margin-bottom: 12px; }
+.trust-page ul { padding-left: 20px; margin-bottom: 12px; }
+.trust-page ul li { font-size: 14px; color: var(--muted); line-height: 1.8; }
+.trust-date { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+
+/* Dark mode toggle */
+.dark-toggle {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 10px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--muted);
+  cursor: pointer; transition: all var(--transition);
+}
+.dark-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Bulk cards */
+.bulk-option {
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px;
+  cursor: pointer; text-align: center;
+  transition: all var(--transition);
+}
+.bulk-option:hover, .bulk-option.selected { border-color: var(--gold); background: var(--gold-bg); }
+.bulk-option .bulk-icon { font-size: 22px; margin-bottom: 6px; }
+.bulk-option .bulk-name { font-size: 12px; font-weight: 600; color: var(--text); }
+
+/* PDF preview */
+.pdf-preview {
+  background: white; color: #111;
+  border: 1px solid #ddd; border-radius: 4px;
+  padding: 32px 40px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; line-height: 1.7;
+  white-space: pre-wrap; max-height: 400px;
+  overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Payment tracker */
+.payment-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.payment-row:last-child { border-bottom: none; }
+
+/* ══════════════════════════════════════
+   MOBILE
+══════════════════════════════════════ */
+@media(max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-btn { display: block; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .grid2, .grid3, .form-grid { grid-template-columns: 1fr; }
+  .content { padding: 16px; }
+  .topbar { padding: 10px 16px; }
+  .hide-mobile { display: none; }
+  .tool-grid { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════
+   AI TOOL SPECIFIC
+══════════════════════════════════════ */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; min-height: 420px; }
+.tool-left { padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
+.tool-right { padding: 20px; background: var(--surface2); display: flex; flex-direction: column; }
+#aiInput {
+  width: 100%; background: var(--bg2);
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 14px; color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px; outline: none; resize: none;
+  min-height: 110px; line-height: 1.6;
+  transition: border-color var(--transition);
+}
+#aiInput:focus { border-color: var(--gold); }
+#aiInput::placeholder { color: var(--muted); }
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 199;
+}
+.sidebar-overlay.show { display: block; }
 </style>
 </head>
 <body>
 
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo">CAdesk<span>.</span>ai</div>
-    <div class="tagline">CA Practice Dashboard</div>
+    <div>
+      <div class="logo-text">CAdesk<span>.</span>ai</div>
+      <div style="font-size:10px;color:var(--sidebar-muted);margin-top:2px;">CA Practice Dashboard</div>
+    </div>
+    <span class="logo-badge">Pro</span>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">Main</div>
-    <div class="nav-item active" onclick="showPanel('dashboard', this)"><span class="icon">📊</span> Dashboard</div>
-    <div class="nav-item" onclick="showPanel('aitool', this)"><span class="icon">✍️</span> AI Document Drafts</div>
-    <div class="nav-item" onclick="showPanel('bulk', this)"><span class="icon">📦</span> Bulk Generator</div>
-    <div class="nav-section">Practice</div>
-    <div class="nav-item" onclick="showPanel('clients', this)"><span class="icon">👥</span> Client Manager</div>
-    <div class="nav-item" onclick="showPanel('deadlines', this)"><span class="icon">📅</span> Deadline Tracker</div>
-    <div class="nav-section">Tools</div>
-    <div class="nav-item" onclick="showPanel('whatsapp', this)"><span class="icon">💬</span> WhatsApp Templates</div>
-    <div class="nav-item" onclick="showPanel('pricing', this)"><span class="icon">💰</span> Upgrade Plan</div>
-  </nav>
+
+  <div class="sidebar-section">Main</div>
+  <button class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</button>
+  <button class="nav-item" onclick="showPanel('aitool',this)"><span class="nav-icon">✍️</span> AI Document Drafts</button>
+  <button class="nav-item" onclick="showPanel('bulk',this)"><span class="nav-icon">📦</span> Bulk Generator</button>
+
+  <div class="sidebar-section">Practice</div>
+  <button class="nav-item" onclick="showPanel('clients',this)"><span class="nav-icon">👥</span> Client Manager</button>
+  <button class="nav-item" onclick="showPanel('deadlines',this)"><span class="nav-icon">📅</span> Deadlines</button>
+  <button class="nav-item" onclick="showPanel('payments',this)"><span class="nav-icon">💰</span> Payment Tracker</button>
+  <button class="nav-item" onclick="showPanel('whatsapp',this)"><span class="nav-icon">💬</span> WhatsApp Templates</button>
+
+  <div class="sidebar-section">Account</div>
+  <button class="nav-item" onclick="showPanel('pricing',this)"><span class="nav-icon">⭐</span> Upgrade Plan</button>
+  <button class="nav-item" onclick="showPanel('privacy',this)"><span class="nav-icon">🔒</span> Privacy Policy</button>
+  <button class="nav-item" onclick="showPanel('terms',this)"><span class="nav-icon">📋</span> Terms of Use</button>
+  <button class="nav-item" onclick="showPanel('about',this)"><span class="nav-icon">ℹ️</span> About</button>
+
   <div class="sidebar-footer">
-    <div class="user-pill">
-      <div class="user-avatar">S</div>
+    <div class="user-info">
+      <div class="user-avatar">CA</div>
       <div>
-        <div class="user-name">Sahil</div>
-        <div class="user-plan">Free Plan</div>
+        <div class="user-name">Your Firm</div>
+        <div class="user-plan" id="planLabel">Free Plan · 40 drafts</div>
       </div>
     </div>
   </div>
 </aside>
 
 <!-- PAYWALL MODAL -->
-<div id="paywallModal">
-  <div style="background:#f5f2eb;border-radius:16px;padding:40px;max-width:460px;width:90%;text-align:center;position:relative;box-shadow:0 32px 80px rgba(0,0,0,0.4);">
+<div class="modal-overlay" id="paywallModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('paywallModal')">✕</button>
     <div style="font-size:36px;margin-bottom:12px;">🔒</div>
-    <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:#0f0e0b;letter-spacing:-1px;margin-bottom:10px;">You've used your 40 free drafts!</div>
-    <div style="font-size:14px;color:#6b6560;margin-bottom:20px;line-height:1.6;">Upgrade to get 200+ drafts per month, client manager, deadline tracker and bulk generation.</div>
-    <div style="background:#fff8ee;border:1px solid #e8d9b0;border-left:4px solid #b8860b;border-radius:8px;padding:14px;margin-bottom:20px;text-align:left;font-size:13px;line-height:1.7;">
-      <strong style="color:#b8860b;font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Pro Plan includes</strong>
-      ✓ 200 AI document drafts/month<br>
-      ✓ Unlimited client management<br>
-      ✓ Deadline tracker & reminders<br>
-      ✓ Bulk document generator<br>
-      ✓ WhatsApp templates
+    <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-0.5px;margin-bottom:10px;">You've used your 40 free drafts!</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Upgrade to Pro for 200+ drafts/month, unlimited clients, PDF export and more.</div>
+    <div style="background:var(--gold-bg);border:1px solid var(--gold-border);border-left:3px solid var(--gold);border-radius:8px;padding:14px;margin-bottom:20px;text-align:left;font-size:13px;line-height:1.8;">
+      <strong style="color:var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Pro Plan includes</strong>
+      ✓ 200 AI drafts/month<br>✓ Unlimited client management<br>✓ PDF export<br>✓ Payment tracker<br>✓ Priority support
     </div>
-    <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:#0f0e0b;margin-bottom:4px;">₹999<span style="font-size:14px;font-family:'IBM Plex Sans',sans-serif;font-weight:400;color:#6b6560">/month</span></div>
-    <div style="font-size:12px;color:#6b6560;margin-bottom:20px;font-style:italic;">≈ $12 USD</div>
-    <a href="https://www.paypal.me/kazeee496/999INR" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#b8860b;color:#fff;padding:14px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:8px;">
+    <div style="font-family:'Playfair Display',serif;font-size:38px;font-weight:900;color:var(--ink);margin-bottom:4px;">₹999<span style="font-size:14px;font-family:'IBM Plex Sans',sans-serif;font-weight:400;color:var(--muted)">/month</span></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;font-style:italic;">≈ $12 USD · Cancel anytime</div>
+    <a href="https://www.paypal.me/kazeee496/999INR" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#0070ba;color:white;padding:13px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:8px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M7.144 19.532l1.049-5.751c.11-.606.691-1.002 1.304-.9 2.155.37 6.111.37 7.583-2.913 1.235-2.79-.682-5.637-4.09-5.637H8.219c-.676 0-1.254.49-1.365 1.156L4.5 18.377a.857.857 0 00.846 1.005h1.45a.857.857 0 00.847-.85h.001z"/></svg>
       PayPal — ₹999/month
     </a>
-    <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=999&cu=INR&tn=CAdesk Pro" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1a7a4a;color:#fff;padding:13px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;margin-bottom:16px;">
-      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#4CAF50" d="M24 4C13 4 4 13 4 24s9 20 20 20 20-9 20-20S35 4 24 4z"/><path fill="white" d="M13 24c0-6.1 4.9-11 11-11 2.8 0 5.3 1 7.2 2.7l3.6-3.6C32.4 9.8 28.4 8 24 8c-8.8 0-16 7.2-16 16h5z"/><path fill="white" d="M35 24c0 6.1-4.9 11-11 11-2.8 0-5.3-1-7.2-2.7l-3.6 3.6C15.6 38.2 19.6 40 24 40c8.8 0 16-7.2 16-16h-5z"/></svg>
-      GPay / UPI — ₹2,499/month
+    <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=999&cu=INR&tn=CAdesk Pro" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1a7a4a;color:white;padding:12px;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;margin-bottom:12px;">
+      <svg width="16" height="16" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#4CAF50"/><path fill="white" d="M13 24c0-6.1 4.9-11 11-11 2.8 0 5.3 1 7.2 2.7l3.6-3.6C32.4 9.8 28.4 8 24 8c-8.8 0-16 7.2-16 16h5z"/><path fill="white" d="M35 24c0 6.1-4.9 11-11 11-2.8 0-5.3-1-7.2-2.7l-3.6 3.6C15.6 38.2 19.6 40 24 40c8.8 0 16-7.2 16-16h-5z"/></svg>
+      GPay / UPI — ₹999/month
     </a>
-    <div style="font-size:12px;color:#b0a898;">🔒 Secure payment · Cancel anytime</div>
-    <button onclick="closePaywall()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:20px;color:#b0a898;cursor:pointer;">✕</button>
+    <div style="font-size:11px;color:var(--muted);">🔒 Secure payment · No contracts · Cancel anytime</div>
   </div>
 </div>
 
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="page-title" id="pageTitle">Dashboard</div>
     </div>
     <div class="topbar-right">
-      <span class="badge">Free Plan</span>
-      <span style="font-size:13px;color:var(--muted);" id="draftsCounter">3 drafts left</span>
+      <button class="dark-toggle" onclick="toggleTheme()">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel" class="hide-mobile">Dark Mode</span>
+      </button>
+      <div class="drafts-badge" id="draftsBadge">40 drafts left</div>
     </div>
   </div>
 
@@ -279,63 +690,64 @@ select.form-input { cursor:pointer; }
 
     <!-- ══ DASHBOARD ══ -->
     <div class="panel active" id="panel-dashboard">
+      <div class="security-banner">
+        🔒 Your data is stored securely on your device. We never share or sell your data.
+      </div>
       <div class="stats-row">
         <div class="stat-card green">
-          <div class="label">Total Clients</div>
-          <div class="value" id="totalClients">0</div>
-          <div class="sub">Active this month</div>
+          <div class="stat-label">Total Clients</div>
+          <div class="stat-value" id="stat-clients">0</div>
+          <div class="stat-sub">In your firm</div>
         </div>
         <div class="stat-card gold">
-          <div class="label">Drafts Used</div>
-          <div class="value" id="draftsUsed">0<span>/3</span></div>
-          <div class="sub">Free plan limit</div>
+          <div class="stat-label">Drafts Used</div>
+          <div class="stat-value" id="stat-drafts">0<span>/40</span></div>
+          <div class="stat-sub">Free plan</div>
         </div>
         <div class="stat-card red">
-          <div class="label">Deadlines Due</div>
-          <div class="value" id="deadlinesDue">3</div>
-          <div class="sub">Next 7 days</div>
+          <div class="stat-label">Pending Payments</div>
+          <div class="stat-value" id="stat-pending">₹0</div>
+          <div class="stat-sub">Outstanding</div>
         </div>
         <div class="stat-card blue">
-          <div class="label">Documents</div>
-          <div class="value" id="totalDocs">0</div>
-          <div class="sub">Generated total</div>
+          <div class="stat-label">Deadlines This Month</div>
+          <div class="stat-value">4</div>
+          <div class="stat-sub">April 2026</div>
         </div>
       </div>
 
       <div class="grid2">
         <div class="card">
           <div class="card-head">
-            <div class="card-head-title">Upcoming Deadlines</div>
-            <span style="font-size:11px;color:var(--muted);cursor:pointer;" onclick="showPanel('deadlines', document.querySelector('[onclick*=deadlines]'))">View all →</span>
+            <div class="card-title">Upcoming Deadlines</div>
+            <button class="btn btn-outline btn-xs" onclick="showPanel('deadlines',null)">View All</button>
           </div>
-          <div class="card-body">
+          <div class="card-body" style="padding:16px 20px;">
             <div class="deadline-item">
-              <div class="deadline-date red"><div class="day">15</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-client">All GST clients</div></div>
-              <span class="deadline-tag tag-gst">GST</span>
+              <div class="deadline-date dl-red"><div class="deadline-day">15</div><div class="deadline-month">Apr</div></div>
+              <div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-desc">All GST registered clients</div></div>
+              <span class="pill pill-red">GST</span>
             </div>
             <div class="deadline-item">
-              <div class="deadline-date gold"><div class="day">30</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">ITR Filing (Business)</div><div class="deadline-client">Audit clients</div></div>
-              <span class="deadline-tag tag-it">IT</span>
+              <div class="deadline-date dl-gold"><div class="deadline-day">30</div><div class="deadline-month">Apr</div></div>
+              <div class="deadline-info"><div class="deadline-title">TDS Return Q4</div><div class="deadline-desc">All TDS deductors</div></div>
+              <span class="pill pill-blue">TDS</span>
             </div>
             <div class="deadline-item">
-              <div class="deadline-date green"><div class="day">31</div><div class="month">May</div></div>
-              <div class="deadline-info"><div class="deadline-title">Annual ROC Filing</div><div class="deadline-client">Private Ltd clients</div></div>
-              <span class="deadline-tag tag-roc">ROC</span>
+              <div class="deadline-date dl-green"><div class="deadline-day">31</div><div class="deadline-month">May</div></div>
+              <div class="deadline-info"><div class="deadline-title">ROC Annual Filing</div><div class="deadline-desc">Private limited companies</div></div>
+              <span class="pill pill-green">ROC</span>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-head">
-            <div class="card-head-title">Quick Actions</div>
-          </div>
-          <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
-            <button onclick="showPanel('aitool', document.querySelector('[onclick*=aitool]'))" style="background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:12px;font-weight:600;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;text-align:left;display:flex;align-items:center;gap:10px;">✍️ Draft a Document</button>
-            <button onclick="showPanel('clients', document.querySelector('[onclick*=clients]'))" style="background:var(--cream);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:12px;font-weight:600;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;text-align:left;display:flex;align-items:center;gap:10px;">👥 Add New Client</button>
-            <button onclick="showPanel('bulk', document.querySelector('[onclick*=bulk]'))" style="background:var(--cream);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:12px;font-weight:600;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;text-align:left;display:flex;align-items:center;gap:10px;">📦 Bulk Generate</button>
-            <button onclick="showPanel('whatsapp', document.querySelector('[onclick*=whatsapp]'))" style="background:var(--cream);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:12px;font-weight:600;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;text-align:left;display:flex;align-items:center;gap:10px;">💬 WhatsApp Templates</button>
+          <div class="card-head"><div class="card-title">Quick Actions</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+            <button onclick="showPanel('aitool',null)" class="btn btn-primary" style="justify-content:flex-start;width:100%;">✍️ Draft a Document</button>
+            <button onclick="showPanel('clients',null)" class="btn btn-outline" style="justify-content:flex-start;width:100%;">👥 Add New Client</button>
+            <button onclick="showPanel('payments',null)" class="btn btn-outline" style="justify-content:flex-start;width:100%;">💰 Record Payment</button>
+            <button onclick="showPanel('bulk',null)" class="btn btn-outline" style="justify-content:flex-start;width:100%;">📦 Bulk Messages</button>
           </div>
         </div>
       </div>
@@ -343,120 +755,137 @@ select.form-input { cursor:pointer; }
 
     <!-- ══ AI TOOL ══ -->
     <div class="panel" id="panel-aitool">
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card">
         <div class="card-head">
-          <div class="card-head-title">AI Document Generator</div>
-          <span id="draftsBadge" style="font-size:12px;color:var(--muted);">3 free drafts remaining</span>
+          <div class="card-title">AI Document Generator</div>
+          <div class="flex-gap">
+            <span class="text-muted" id="toolDraftsBadge">40 free drafts remaining</span>
+          </div>
         </div>
-        <div class="tool-tabs">
-          <button class="ttab active" onclick="setTab(this,'gst')">🧾 GST Notice</button>
-          <button class="ttab" onclick="setTab(this,'audit')">📊 Audit Report</button>
-          <button class="ttab" onclick="setTab(this,'client')">✉️ Client Email</button>
-          <button class="ttab" onclick="setTab(this,'advisory')">📋 Tax Advisory</button>
-          <button class="ttab" onclick="setTab(this,'reply')">🏛️ IT Dept Reply</button>
-          <button class="ttab" onclick="setTab(this,'noc')">📜 NOC / Certificate</button>
+        <div class="tabs" id="toolTabs">
+          <button class="tab active" onclick="setTab(this,'gst')">🧾 GST Notice</button>
+          <button class="tab" onclick="setTab(this,'audit')">📊 Audit Report</button>
+          <button class="tab" onclick="setTab(this,'client')">✉️ Client Email</button>
+          <button class="tab" onclick="setTab(this,'advisory')">📋 Tax Advisory</button>
+          <button class="tab" onclick="setTab(this,'reply')">🏛️ IT Dept Reply</button>
+          <button class="tab" onclick="setTab(this,'noc')">📜 NOC / Cert</button>
         </div>
         <div class="tool-grid">
           <div class="tool-left">
             <div>
-              <div class="field-label">Quick Templates</div>
+              <div class="form-label" style="margin-bottom:8px;">Quick Templates</div>
               <div class="chips" id="toolChips"></div>
             </div>
             <div>
-              <div class="field-label">Describe Your Case</div>
+              <div class="form-label" style="margin-bottom:6px;">Describe Your Case</div>
               <textarea id="aiInput" placeholder="Describe your case here..."></textarea>
             </div>
-            <button class="gen-btn" id="genBtn" onclick="generateDoc()">
+            <button class="btn btn-primary" id="genBtn" onclick="generateDoc()" style="width:100%;justify-content:center;">
               <span id="genBtnText">Generate Document →</span>
             </button>
-            <div class="drafts-left" id="draftsLeft">3 free drafts remaining · Upgrade for 200+</div>
+            <div style="font-size:11px;color:var(--muted);text-align:center;">Ctrl+Enter to generate</div>
           </div>
           <div class="tool-right">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div class="field-label">Generated Draft</div>
-              <button class="copy-btn" id="copyBtn" onclick="copyDoc()">Copy</button>
+            <div class="flex-between mb16">
+              <div class="form-label">Generated Draft</div>
+              <div class="flex-gap">
+                <button class="btn btn-outline btn-xs" id="copyDocBtn" onclick="copyDoc()" style="display:none;">📋 Copy</button>
+                <button class="btn btn-gold btn-xs" id="pdfBtn" onclick="exportPDF()" style="display:none;">⬇️ PDF</button>
+              </div>
             </div>
-            <div class="output-box" id="outputBox">
+            <div id="outputBox" class="output-box">
               <div class="output-placeholder" id="outputPlaceholder">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 Your professional draft will appear here
               </div>
-              <div class="typing-dots" id="typingDots">
+              <div class="typing" id="typingDots">
                 <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
-                <span style="font-size:12px;color:var(--muted);margin-left:6px;">Drafting...</span>
+                <span style="font-size:12px;color:var(--muted);margin-left:6px;">AI is drafting...</span>
               </div>
-              <div id="outputText"></div>
+              <div id="outputText" style="font-family:'IBM Plex Sans',sans-serif;"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- ══ BULK ══ -->
+    <div class="panel" id="panel-bulk">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Bulk Message Generator</div></div>
+        <div class="card-body">
+          <div class="form-label mb16">Select Message Type</div>
+          <div class="grid3 mb20">
+            <div class="bulk-option selected" onclick="selectBulk(this,'gst')"><div class="bulk-icon">🧾</div><div class="bulk-name">GST Reminder</div></div>
+            <div class="bulk-option" onclick="selectBulk(this,'itr')"><div class="bulk-icon">📊</div><div class="bulk-name">ITR Reminder</div></div>
+            <div class="bulk-option" onclick="selectBulk(this,'fee')"><div class="bulk-icon">💰</div><div class="bulk-name">Fee Reminder</div></div>
+            <div class="bulk-option" onclick="selectBulk(this,'docs')"><div class="bulk-icon">📋</div><div class="bulk-name">Doc Request</div></div>
+            <div class="bulk-option" onclick="selectBulk(this,'tds')"><div class="bulk-icon">🏛️</div><div class="bulk-name">TDS Reminder</div></div>
+            <div class="bulk-option" onclick="selectBulk(this,'welcome')"><div class="bulk-icon">🎉</div><div class="bulk-name">Welcome Client</div></div>
+          </div>
+          <div class="form-group mb16">
+            <label class="form-label">Additional Details (optional)</label>
+            <textarea class="form-input" id="bulkDetails" placeholder="Add specific deadline dates, amounts, etc."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="generateBulk()">Generate Templates</button>
+        </div>
+        <div id="bulkOutput" style="display:none;padding:20px;border-top:1px solid var(--border);">
+          <div class="form-label mb16">Generated Templates</div>
+          <div id="bulkContent"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ CLIENTS ══ -->
     <div class="panel" id="panel-clients">
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card mb20">
         <div class="card-head">
-          <div class="card-head-title">Add New Client</div>
+          <div class="card-title">Add New Client</div>
+          <button class="btn btn-outline btn-xs" onclick="toggleAddClient()">+ Add Client</button>
         </div>
-        <div class="card-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Client Name / Firm</label>
-              <input type="text" class="form-input" id="clientName" placeholder="e.g. Sharma Textiles Pvt Ltd">
+        <div id="addClientForm" style="display:none;">
+          <div class="card-body">
+            <div class="form-grid mb16">
+              <div class="form-group"><label class="form-label">Client / Firm Name *</label><input class="form-input" id="c-name" placeholder="Sharma Textiles Pvt Ltd"></div>
+              <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="c-phone" placeholder="9876543210"></div>
+              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="c-email" placeholder="client@email.com"></div>
+              <div class="form-group"><label class="form-label">PAN Number</label><input class="form-input" id="c-pan" placeholder="AAAAA0001A"></div>
+              <div class="form-group"><label class="form-label">GSTIN</label><input class="form-input" id="c-gst" placeholder="27AAAAA0001A1Z5"></div>
+              <div class="form-group"><label class="form-label">Service Type</label>
+                <select class="form-input" id="c-service">
+                  <option>GST Only</option><option>ITR Filing</option><option>GST + ITR</option>
+                  <option>Full Service</option><option>Audit</option><option>TDS</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="c-address" placeholder="City, State"></div>
+              <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="c-notes" placeholder="Any special instructions"></div>
             </div>
-            <div class="form-group">
-              <label>GSTIN</label>
-              <input type="text" class="form-input" id="clientGSTIN" placeholder="27AAAAA0001A1Z5">
-            </div>
-            <div class="form-group">
-              <label>PAN Number</label>
-              <input type="text" class="form-input" id="clientPAN" placeholder="AAAAA0001A">
-            </div>
-            <div class="form-group">
-              <label>Phone</label>
-              <input type="text" class="form-input" id="clientPhone" placeholder="9876543210">
-            </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" class="form-input" id="clientEmail" placeholder="client@email.com">
-            </div>
-            <div class="form-group">
-              <label>Plan Type</label>
-              <select class="form-input" id="clientPlan">
-                <option>GST Only</option>
-                <option>IT Filing</option>
-                <option>GST + IT</option>
-                <option>Full Service</option>
-                <option>Audit</option>
-              </select>
-            </div>
+            <button class="btn btn-primary" onclick="addClient()">Save Client</button>
+            <button class="btn btn-outline" onclick="toggleAddClient()" style="margin-left:8px;">Cancel</button>
           </div>
-          <button class="submit-btn" style="margin-top:16px;" onclick="addClient()">Add Client</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-head">
-          <div class="card-head-title">All Clients</div>
-          <span style="font-size:12px;color:var(--muted);" id="clientCount">0 clients</span>
-        </div>
-        <div class="card-body" style="padding:0;">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>GSTIN</th>
-                  <th>Plan</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="clientsTable">
-                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;">No clients added yet. Add your first client above!</td></tr>
-              </tbody>
-            </table>
+          <div class="card-title">All Clients</div>
+          <div class="flex-gap">
+            <div class="search-box" style="width:220px;">
+              <span>🔍</span>
+              <input type="text" id="clientSearch" placeholder="Search clients..." oninput="filterClients()">
+            </div>
+            <span class="text-muted" id="clientCount">0 clients</span>
           </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>GSTIN</th><th>Service</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="clientsTable">
+              <tr class="empty-row"><td colspan="5">No clients yet. Add your first client above!</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -465,105 +894,61 @@ select.form-input { cursor:pointer; }
     <div class="panel" id="panel-deadlines">
       <div class="grid2">
         <div class="card">
-          <div class="card-head"><div class="card-head-title">April 2026</div></div>
-          <div class="card-body">
-            <div class="deadline-item">
-              <div class="deadline-date red"><div class="day">7</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">GSTR-1 Filing</div><div class="deadline-client">Monthly filers</div></div>
-              <span class="deadline-tag tag-gst">GST</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date red"><div class="day">15</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-client">All GST clients</div></div>
-              <span class="deadline-tag tag-gst">GST</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date gold"><div class="day">30</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">TDS Return Q4</div><div class="deadline-client">All TDS deductors</div></div>
-              <span class="deadline-tag tag-it">IT</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date gold"><div class="day">30</div><div class="month">Apr</div></div>
-              <div class="deadline-info"><div class="deadline-title">Advance Tax Q4</div><div class="deadline-client">Taxpayers</div></div>
-              <span class="deadline-tag tag-it">IT</span>
-            </div>
+          <div class="card-head"><div class="card-title">April 2026</div></div>
+          <div class="card-body" style="padding:16px 20px;">
+            <div class="deadline-item"><div class="deadline-date dl-red"><div class="deadline-day">7</div><div class="deadline-month">Apr</div></div><div class="deadline-info"><div class="deadline-title">GSTR-1 Filing</div><div class="deadline-desc">Monthly filers</div></div><span class="pill pill-red">GST</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-red"><div class="deadline-day">15</div><div class="deadline-month">Apr</div></div><div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-desc">All GST clients</div></div><span class="pill pill-red">GST</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-gold"><div class="deadline-day">30</div><div class="deadline-month">Apr</div></div><div class="deadline-info"><div class="deadline-title">TDS Return Q4</div><div class="deadline-desc">All TDS deductors</div></div><span class="pill pill-blue">TDS</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-gold"><div class="deadline-day">30</div><div class="deadline-month">Apr</div></div><div class="deadline-info"><div class="deadline-title">Advance Tax Q4</div><div class="deadline-desc">All taxpayers</div></div><span class="pill pill-gold">IT</span></div>
           </div>
         </div>
         <div class="card">
-          <div class="card-head"><div class="card-head-title">May — June 2026</div></div>
-          <div class="card-body">
-            <div class="deadline-item">
-              <div class="deadline-date gold"><div class="day">11</div><div class="month">May</div></div>
-              <div class="deadline-info"><div class="deadline-title">GSTR-1 Filing</div><div class="deadline-client">Monthly filers</div></div>
-              <span class="deadline-tag tag-gst">GST</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date gold"><div class="day">20</div><div class="month">May</div></div>
-              <div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-client">All GST clients</div></div>
-              <span class="deadline-tag tag-gst">GST</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date green"><div class="day">31</div><div class="month">May</div></div>
-              <div class="deadline-info"><div class="deadline-title">ROC Annual Filing</div><div class="deadline-client">Pvt Ltd companies</div></div>
-              <span class="deadline-tag tag-roc">ROC</span>
-            </div>
-            <div class="deadline-item">
-              <div class="deadline-date green"><div class="day">30</div><div class="month">Jun</div></div>
-              <div class="deadline-info"><div class="deadline-title">ITR Filing (Non-Audit)</div><div class="deadline-client">Individual clients</div></div>
-              <span class="deadline-tag tag-it">IT</span>
-            </div>
+          <div class="card-head"><div class="card-title">May — June 2026</div></div>
+          <div class="card-body" style="padding:16px 20px;">
+            <div class="deadline-item"><div class="deadline-date dl-gold"><div class="deadline-day">11</div><div class="deadline-month">May</div></div><div class="deadline-info"><div class="deadline-title">GSTR-1 Filing</div><div class="deadline-desc">Monthly filers</div></div><span class="pill pill-red">GST</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-gold"><div class="deadline-day">20</div><div class="deadline-month">May</div></div><div class="deadline-info"><div class="deadline-title">GSTR-3B Filing</div><div class="deadline-desc">All GST clients</div></div><span class="pill pill-red">GST</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-green"><div class="deadline-day">31</div><div class="deadline-month">May</div></div><div class="deadline-info"><div class="deadline-title">ROC Annual Filing</div><div class="deadline-desc">Pvt Ltd companies</div></div><span class="pill pill-green">ROC</span></div>
+            <div class="deadline-item"><div class="deadline-date dl-green"><div class="deadline-day">30</div><div class="deadline-month">Jun</div></div><div class="deadline-info"><div class="deadline-title">ITR Filing (Non-Audit)</div><div class="deadline-desc">Individual clients</div></div><span class="pill pill-gold">IT</span></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ BULK GENERATOR ══ -->
-    <div class="panel" id="panel-bulk">
-      <div class="card">
-        <div class="card-head"><div class="card-head-title">Bulk Document Generator</div></div>
+    <!-- ══ PAYMENTS ══ -->
+    <div class="panel" id="panel-payments">
+      <div class="stats-row">
+        <div class="stat-card green"><div class="stat-label">Total Received</div><div class="stat-value" id="p-received">₹0</div><div class="stat-sub">This month</div></div>
+        <div class="stat-card red"><div class="stat-label">Pending</div><div class="stat-value" id="p-pending">₹0</div><div class="stat-sub">Outstanding</div></div>
+        <div class="stat-card gold"><div class="stat-label">Total Clients</div><div class="stat-value" id="p-clients">0</div><div class="stat-sub">With payments</div></div>
+        <div class="stat-card blue"><div class="stat-label">Overdue</div><div class="stat-value" id="p-overdue">0</div><div class="stat-sub">Need follow up</div></div>
+      </div>
+
+      <div class="card mb20">
+        <div class="card-head"><div class="card-title">Record Payment</div></div>
         <div class="card-body">
-          <div class="field-label" style="margin-bottom:12px;">Select Document Type</div>
-          <div class="bulk-grid">
-            <div class="bulk-card selected" onclick="selectBulk(this,'gst_reminder')">
-              <div class="bulk-icon">🧾</div>
-              <div class="bulk-title">GST Filing Reminder</div>
-              <div class="bulk-desc">Send to all GST clients</div>
+          <div class="form-grid mb16">
+            <div class="form-group"><label class="form-label">Client Name</label><input class="form-input" id="p-client" placeholder="Client name"></div>
+            <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" type="number" id="p-amount" placeholder="5000"></div>
+            <div class="form-group"><label class="form-label">Status</label>
+              <select class="form-input" id="p-status">
+                <option>Pending</option><option>Paid</option><option>Overdue</option><option>Partial</option>
+              </select>
             </div>
-            <div class="bulk-card" onclick="selectBulk(this,'fee_reminder')">
-              <div class="bulk-icon">💰</div>
-              <div class="bulk-title">Fee Reminder</div>
-              <div class="bulk-desc">Outstanding payment clients</div>
-            </div>
-            <div class="bulk-card" onclick="selectBulk(this,'doc_request')">
-              <div class="bulk-icon">📋</div>
-              <div class="bulk-title">Document Request</div>
-              <div class="bulk-desc">Collect docs from clients</div>
-            </div>
-            <div class="bulk-card" onclick="selectBulk(this,'itr_reminder')">
-              <div class="bulk-icon">📊</div>
-              <div class="bulk-title">ITR Filing Reminder</div>
-              <div class="bulk-desc">All individual clients</div>
-            </div>
-            <div class="bulk-card" onclick="selectBulk(this,'tds_reminder')">
-              <div class="bulk-icon">🏛️</div>
-              <div class="bulk-title">TDS Reminder</div>
-              <div class="bulk-desc">TDS deductor clients</div>
-            </div>
-            <div class="bulk-card" onclick="selectBulk(this,'deadline_alert')">
-              <div class="bulk-icon">⚠️</div>
-              <div class="bulk-title">Deadline Alert</div>
-              <div class="bulk-desc">General deadline reminder</div>
-            </div>
+            <div class="form-group"><label class="form-label">Due Date</label><input class="form-input" type="date" id="p-date"></div>
+            <div class="form-group"><label class="form-label">Service</label><input class="form-input" id="p-service" placeholder="GST Filing, ITR, etc."></div>
+            <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="p-notes" placeholder="Optional notes"></div>
           </div>
-          <div class="form-group" style="margin-bottom:16px;">
-            <label>Additional Details (optional)</label>
-            <textarea class="form-input" id="bulkDetails" style="min-height:80px;resize:none;" placeholder="Add any specific details like deadline date, amount due, etc."></textarea>
-          </div>
-          <button class="submit-btn" onclick="generateBulk()">Generate Message Templates</button>
+          <button class="btn btn-primary" onclick="addPayment()">Record Payment</button>
         </div>
-        <div id="bulkOutput" style="display:none;padding:20px;border-top:1px solid var(--border);">
-          <div class="field-label" style="margin-bottom:12px;">Generated Templates</div>
-          <div id="bulkOutputContent"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Payment Records</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Client</th><th>Service</th><th>Amount</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="paymentsTable"><tr class="empty-row"><td colspan="6">No payments recorded yet.</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -571,40 +956,38 @@ select.form-input { cursor:pointer; }
     <!-- ══ WHATSAPP ══ -->
     <div class="panel" id="panel-whatsapp">
       <div class="card">
-        <div class="card-head"><div class="card-head-title">WhatsApp Message Templates</div></div>
+        <div class="card-head"><div class="card-title">WhatsApp Message Templates</div></div>
         <div class="card-body">
 
-          <div class="wa-template">
-            <div class="wa-template-title">GST Filing Reminder</div>
-            <div class="wa-template-body">Respected Sir/Madam 🙏
+          <div class="wa-card">
+            <div class="wa-title">GST Filing Reminder</div>
+            <div class="wa-body">Respected Sir/Madam 🙏
 
-Your GSTR-3B filing for the month of [MONTH] is due on [DATE].
+Your GSTR-3B filing for [MONTH] is due on [DATE].
 
-Kindly share the following at earliest:
+Kindly share the following documents at earliest:
 ✓ Purchase invoices
-✓ Sale invoices  
+✓ Sale invoices
 ✓ Bank statement
 
-Delay may result in late fees of ₹50/day.
+Delay may attract late fees of ₹50/day.
 
 Please revert at earliest.
 
 Thanks & Regards,
-[CA FIRM NAME]</div>
-            <button class="wa-copy-btn" onclick="copyWA(this)">Copy</button>
+[CA FIRM NAME] | [PHONE]</div>
+            <button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyWA(this)">📋 Copy</button>
           </div>
 
-          <div class="wa-template">
-            <div class="wa-template-title">Fee Reminder</div>
-            <div class="wa-template-body">Dear [CLIENT NAME] ji 🙏
+          <div class="wa-card">
+            <div class="wa-title">Fee Reminder</div>
+            <div class="wa-body">Dear [CLIENT NAME] ji 🙏
 
 Hope you are doing well!
 
-This is a gentle reminder that our professional fees of ₹[AMOUNT] for [SERVICE] services for [PERIOD] are pending.
+Gentle reminder that our professional fees of ₹[AMOUNT] for [SERVICE] services are pending.
 
-Request you to kindly arrange the payment at your earliest convenience.
-
-Payment can be made via:
+Kindly arrange payment at your earliest convenience:
 📱 GPay/UPI: shailshaikhq3@okaxis
 💳 PayPal: paypal.me/kazeee496
 
@@ -612,14 +995,14 @@ Thank you for your continued trust.
 
 Regards,
 [CA FIRM NAME]</div>
-            <button class="wa-copy-btn" onclick="copyWA(this)">Copy</button>
+            <button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyWA(this)">📋 Copy</button>
           </div>
 
-          <div class="wa-template">
-            <div class="wa-template-title">Document Collection Request</div>
-            <div class="wa-template-body">Dear [CLIENT NAME] ji 🙏
+          <div class="wa-card">
+            <div class="wa-title">Document Collection Request</div>
+            <div class="wa-body">Dear [CLIENT NAME] ji 🙏
 
-For filing your [ITR/GST/AUDIT] for [FY/PERIOD], we require the following documents:
+For filing your [ITR/GST/AUDIT] for [PERIOD], we require:
 
 📌 Form 16 (for salaried)
 📌 Bank statements (all accounts)
@@ -627,16 +1010,16 @@ For filing your [ITR/GST/AUDIT] for [FY/PERIOD], we require the following docume
 📌 Property documents (if applicable)
 📌 Business P&L (if applicable)
 
-Kindly share the above by [DATE] to avoid any last minute delays.
+Kindly share by [DATE] to avoid delays.
 
 Thanks & Regards,
 [CA FIRM NAME]</div>
-            <button class="wa-copy-btn" onclick="copyWA(this)">Copy</button>
+            <button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyWA(this)">📋 Copy</button>
           </div>
 
-          <div class="wa-template">
-            <div class="wa-template-title">ITR Filing Completion</div>
-            <div class="wa-template-body">Dear [CLIENT NAME] ji 🙏
+          <div class="wa-card">
+            <div class="wa-title">ITR Filing Complete</div>
+            <div class="wa-body">Dear [CLIENT NAME] ji 🙏
 
 Good news! Your Income Tax Return for AY [AY] has been successfully filed ✅
 
@@ -645,33 +1028,30 @@ Filing Details:
 📅 Filed on: [DATE]
 💰 Tax Payable/Refund: ₹[AMOUNT]
 
-Please save this message for your records.
-
-For any queries, feel free to reach out.
+Please save this for your records.
 
 Thanks & Regards,
 [CA FIRM NAME]</div>
-            <button class="wa-copy-btn" onclick="copyWA(this)">Copy</button>
+            <button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyWA(this)">📋 Copy</button>
           </div>
 
-          <div class="wa-template">
-            <div class="wa-template-title">New Client Welcome</div>
-            <div class="wa-template-body">Dear [CLIENT NAME] ji 🙏
+          <div class="wa-card">
+            <div class="wa-title">New Client Welcome</div>
+            <div class="wa-body">Dear [CLIENT NAME] ji 🙏
 
 Welcome to [CA FIRM NAME]! We're delighted to have you as our client.
 
 We will be handling your:
 ✓ [LIST SERVICES]
 
-Your dedicated point of contact: [NAME]
-📞 [PHONE]
-📧 [EMAIL]
+Your point of contact: [NAME]
+📞 [PHONE] | 📧 [EMAIL]
 
-Please feel free to reach out anytime. We're here to help!
+Feel free to reach out anytime!
 
 Thanks & Regards,
 [CA FIRM NAME]</div>
-            <button class="wa-copy-btn" onclick="copyWA(this)">Copy</button>
+            <button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyWA(this)">📋 Copy</button>
           </div>
 
         </div>
@@ -680,68 +1060,213 @@ Thanks & Regards,
 
     <!-- ══ PRICING ══ -->
     <div class="panel" id="panel-pricing">
-      <div style="max-width:800px;margin:0 auto;">
+      <div style="max-width:860px;margin:0 auto;">
         <div style="text-align:center;margin-bottom:32px;">
-          <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--ink);letter-spacing:-1px;margin-bottom:8px;">Upgrade Your Plan</div>
-          <div style="font-size:15px;color:var(--muted);">Get 200+ drafts, unlimited clients, deadline tracker and more</div>
+          <div class="section-tag" style="justify-content:center;">Pricing Plans</div>
+          <div class="section-title" style="font-size:32px;">Simple, Honest Pricing</div>
+          <div class="section-sub">Less than your daily chai bill. Cancel anytime.</div>
         </div>
         <div class="grid3">
-          <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:28px;">
-            <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:6px;">Solo</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Individual practitioners</div>
-            <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;letter-spacing:-2px;margin-bottom:4px;">₹499</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">per month · ≈ $6 USD</div>
-            <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.8;">✓ 50 AI drafts/month<br>✓ Client manager<br>✓ Deadline tracker<br>✓ WhatsApp templates</div>
-            <a href="https://www.paypal.me/kazeee496/499INR" target="_blank" style="display:block;background:var(--ink);color:var(--paper);padding:11px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;text-align:center;margin-bottom:6px;">PayPal — ₹499/mo</a>
-            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=499&cu=INR&tn=CAdesk Solo" style="display:block;background:#1a7a4a;color:white;padding:11px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;text-align:center;">GPay — ₹499/mo</a>
+          <div class="pricing-card">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:4px;">Solo</div>
+            <div class="text-muted mb16">Individual practitioners</div>
+            <div class="pricing-amount">₹499</div>
+            <div class="pricing-period">per month · ≈ $6 USD</div>
+            <ul class="pricing-features">
+              <li><span class="pricing-check">—</span> 50 AI drafts/month</li>
+              <li><span class="pricing-check">—</span> Client manager</li>
+              <li><span class="pricing-check">—</span> Deadline tracker</li>
+              <li><span class="pricing-check">—</span> PDF export</li>
+              <li><span class="pricing-check">—</span> WhatsApp templates</li>
+            </ul>
+            <a href="https://www.paypal.me/kazeee496/499INR" target="_blank" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px;text-decoration:none;">PayPal — ₹499/mo</a>
+            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=499&cu=INR&tn=CAdesk Solo" class="btn btn-green" style="width:100%;justify-content:center;text-decoration:none;">GPay — ₹499/mo</a>
           </div>
-          <div style="background:var(--ink);border:1.5px solid var(--ink);border-radius:10px;padding:28px;position:relative;">
-            <div style="background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;padding:4px 12px;border-radius:2px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;margin-bottom:16px;">Most Popular</div>
-            <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--paper);margin-bottom:6px;">Pro Firm</div>
+
+          <div class="pricing-card featured">
+            <div style="background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;padding:4px 12px;border-radius:2px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;margin-bottom:16px;">⭐ Most Popular</div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--bg);margin-bottom:4px;">Pro Firm</div>
             <div style="font-size:12px;color:#888;margin-bottom:16px;">CA firms with staff</div>
-            <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;letter-spacing:-2px;color:var(--paper);margin-bottom:4px;">₹999</div>
-            <div style="font-size:12px;color:#888;margin-bottom:20px;">per month · ≈ $12 USD</div>
-            <div style="font-size:13px;color:#bbb;margin-bottom:20px;line-height:1.8;">✓ 200 AI drafts/month<br>✓ Unlimited clients<br>✓ Bulk generator<br>✓ Priority support<br>✓ 3 team seats</div>
-            <a href="https://www.paypal.me/kazeee496/999INR" target="_blank" style="display:block;background:var(--gold);color:var(--ink);padding:11px;border-radius:6px;font-weight:700;font-size:13px;text-decoration:none;text-align:center;margin-bottom:6px;">PayPal — ₹999/mo</a>
-            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=999&cu=INR&tn=CAdesk Pro" style="display:block;background:#1a7a4a;color:white;padding:11px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;text-align:center;">GPay — ₹999/mo</a>
+            <div class="pricing-amount" style="color:var(--bg);">₹999</div>
+            <div class="pricing-period">per month · ≈ $12 USD</div>
+            <ul class="pricing-features">
+              <li><span class="pricing-check">—</span> 200 AI drafts/month</li>
+              <li><span class="pricing-check">—</span> Unlimited clients</li>
+              <li><span class="pricing-check">—</span> Payment tracker</li>
+              <li><span class="pricing-check">—</span> Bulk generator</li>
+              <li><span class="pricing-check">—</span> 3 team seats</li>
+              <li><span class="pricing-check">—</span> Priority support</li>
+            </ul>
+            <a href="https://www.paypal.me/kazeee496/999INR" target="_blank" class="btn btn-gold" style="width:100%;justify-content:center;margin-bottom:8px;text-decoration:none;">PayPal — ₹999/mo</a>
+            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=999&cu=INR&tn=CAdesk Pro" class="btn btn-green" style="width:100%;justify-content:center;text-decoration:none;">GPay — ₹999/mo</a>
           </div>
-          <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:28px;">
-            <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:6px;">Enterprise</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">Large firms & networks</div>
-            <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:900;letter-spacing:-2px;margin-bottom:4px;">₹2,499</div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">per month · ≈ $29 USD</div>
-            <div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.8;">✓ Unlimited AI drafts<br>✓ Unlimited team seats<br>✓ Custom AI training<br>✓ API access<br>✓ Dedicated manager</div>
-            <a href="https://www.paypal.me/kazeee496/2499INR" target="_blank" style="display:block;background:var(--ink);color:var(--paper);padding:11px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;text-align:center;margin-bottom:6px;">PayPal — ₹2,499/mo</a>
-            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=2499&cu=INR&tn=CAdesk Enterprise" style="display:block;background:#1a7a4a;color:white;padding:11px;border-radius:6px;font-weight:600;font-size:13px;text-decoration:none;text-align:center;">GPay — ₹2,499/mo</a>
+
+          <div class="pricing-card">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:4px;">Enterprise</div>
+            <div class="text-muted mb16">Large firms & networks</div>
+            <div class="pricing-amount">₹2,499</div>
+            <div class="pricing-period">per month · ≈ $29 USD</div>
+            <ul class="pricing-features">
+              <li><span class="pricing-check">—</span> Unlimited AI drafts</li>
+              <li><span class="pricing-check">—</span> Unlimited team seats</li>
+              <li><span class="pricing-check">—</span> Custom AI training</li>
+              <li><span class="pricing-check">—</span> API access</li>
+              <li><span class="pricing-check">—</span> Dedicated manager</li>
+            </ul>
+            <a href="https://www.paypal.me/kazeee496/2499INR" target="_blank" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px;text-decoration:none;">PayPal — ₹2,499/mo</a>
+            <a href="upi://pay?pa=shailshaikhq3@okaxis&pn=CAdesk AI&am=2499&cu=INR&tn=CAdesk Enterprise" class="btn btn-green" style="width:100%;justify-content:center;text-decoration:none;">GPay — ₹2,499/mo</a>
           </div>
         </div>
       </div>
     </div>
 
-  </div>
+    <!-- ══ PRIVACY ══ -->
+    <div class="panel" id="panel-privacy">
+      <div class="trust-page">
+        <div class="section-tag">Legal</div>
+        <h1>Privacy Policy</h1>
+        <div class="trust-date">Last updated: April 2026</div>
+        <div class="security-banner">🔒 Your data stays on your device. We never share, sell or access your client data.</div>
+        <h2>1. Data We Collect</h2>
+        <p>CAdesk.ai is designed with privacy first. Client data you enter (names, PAN, GSTIN, etc.) is stored locally on your device using browser storage. We do not transmit this data to our servers.</p>
+        <p>We collect minimal usage data: number of documents generated (anonymized), browser type, and general location (country level) for improving our service.</p>
+        <h2>2. How We Use Data</h2>
+        <p>Document drafts are processed through our AI backend (Cloudflare Workers) and are not stored after processing. The text you input for document generation is used solely to generate the response and is immediately discarded.</p>
+        <h2>3. Data Storage</h2>
+        <p>Client information, payment records, and settings are stored in your browser's localStorage. This data never leaves your device unless you explicitly export it.</p>
+        <h2>4. Third Party Services</h2>
+        <ul>
+          <li>Groq AI API — processes document requests (no data retained)</li>
+          <li>Cloudflare Workers — backend infrastructure</li>
+          <li>PayPal / GPay — payment processing (governed by their own policies)</li>
+          <li>Google Fonts — typography (standard CDN usage)</li>
+        </ul>
+        <h2>5. Your Rights</h2>
+        <p>You can delete all your data at any time by clearing your browser's localStorage for this site. We do not maintain any personal data on our servers that requires deletion requests.</p>
+        <h2>6. Contact</h2>
+        <p>For privacy concerns: hellocadesk.ai@gmail.com</p>
+      </div>
+    </div>
+
+    <!-- ══ TERMS ══ -->
+    <div class="panel" id="panel-terms">
+      <div class="trust-page">
+        <div class="section-tag">Legal</div>
+        <h1>Terms of Use</h1>
+        <div class="trust-date">Last updated: April 2026</div>
+        <h2>1. Acceptance</h2>
+        <p>By using CAdesk.ai, you agree to these terms. If you do not agree, please discontinue use.</p>
+        <h2>2. Service Description</h2>
+        <p>CAdesk.ai is an AI-powered document drafting assistant for Indian Chartered Accountants. It generates draft documents based on user input. All drafts are starting points and must be reviewed, verified, and edited by a qualified CA before use.</p>
+        <h2>3. Not Legal Advice</h2>
+        <p>Documents generated by CAdesk.ai are drafts only and do not constitute legal or professional advice. The professional responsibility for all documents submitted to clients or authorities lies solely with the practicing CA. Always verify legal citations, section numbers, and case references before use.</p>
+        <h2>4. Acceptable Use</h2>
+        <ul>
+          <li>Use only for legitimate CA practice purposes</li>
+          <li>Do not attempt to bypass usage limits fraudulently</li>
+          <li>Do not use for illegal activities</li>
+          <li>Do not share account credentials</li>
+        </ul>
+        <h2>5. Payment & Refunds</h2>
+        <p>Subscription fees are charged monthly. Cancellations take effect at the end of the current billing period. Refunds are considered on a case-by-case basis within 7 days of payment.</p>
+        <h2>6. Limitation of Liability</h2>
+        <p>CAdesk.ai is not liable for any loss, legal consequence, or damage arising from use of generated documents. Users assume full responsibility for reviewing and verifying all content.</p>
+        <h2>7. Contact</h2>
+        <p>For queries: hellocadesk.ai@gmail.com</p>
+      </div>
+    </div>
+
+    <!-- ══ ABOUT ══ -->
+    <div class="panel" id="panel-about">
+      <div class="trust-page">
+        <div class="section-tag">About</div>
+        <h1>About CAdesk.ai</h1>
+        <div class="trust-date">Version 2.0 · Built in India 🇮🇳</div>
+        <div class="security-banner">🏆 Built specifically for Indian Chartered Accountants — not a generic AI tool.</div>
+        <h2>Our Mission</h2>
+        <p>CAdesk.ai was built with one goal: to save Indian CA firms 3+ hours of drafting work every single day. We believe CAs should spend their time on strategy and client relationships, not repetitive document drafting.</p>
+        <h2>What We Built</h2>
+        <p>A complete AI-powered practice management dashboard that includes professional document generation, client management, deadline tracking, payment tracking, and WhatsApp message templates — all in one place, all free to start.</p>
+        <h2>Why Indian CAs Specifically?</h2>
+        <p>Generic AI tools don't understand Indian tax law, ICAI standards, GST regulations, or the specific language that Indian regulatory authorities expect. CAdesk.ai is trained on Indian legal language, real GST circulars, IT Act sections, and ICAI standards.</p>
+        <h2>Technology</h2>
+        <p>Built on Cloudflare's global infrastructure for speed and reliability. AI powered by state-of-the-art language models. Your data stays on your device.</p>
+        <h2>Contact Us</h2>
+        <p>📧 hellocadesk.ai@gmail.com</p>
+        <p>🌐 cadeskai.github.io/Cadesk-Ai</p>
+        <p>Built with ❤️ by Sahil, Founder of CAdesk.ai</p>
+      </div>
+    </div>
+
+  </div><!-- /content -->
 </main>
 
+<!-- TOAST -->
+<div id="toast"></div>
+
 <script>
-// ── NAVIGATION ──
-function showPanel(id, el) {
+// ══════════════════════════════════════
+// THEME
+// ══════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+  document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+  localStorage.setItem('cadesk_theme', isDark ? 'light' : 'dark');
+}
+// Load saved theme
+const savedTheme = localStorage.getItem('cadesk_theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('themeIcon').textContent = '☀️';
+  document.getElementById('themeLabel').textContent = 'Light Mode';
+}
+
+// ══════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+const pageTitles = {
+  dashboard: 'Dashboard', aitool: 'AI Document Drafts',
+  bulk: 'Bulk Generator', clients: 'Client Manager',
+  deadlines: 'Deadline Tracker', payments: 'Payment Tracker',
+  whatsapp: 'WhatsApp Templates', pricing: 'Upgrade Plan',
+  privacy: 'Privacy Policy', terms: 'Terms of Use', about: 'About CAdesk.ai'
+};
+
+function showPanel(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
-  if (el) el.classList.add('active');
-  const titles = { dashboard:'Dashboard', aitool:'AI Document Drafts', bulk:'Bulk Generator', clients:'Client Manager', deadlines:'Deadline Tracker', whatsapp:'WhatsApp Templates', pricing:'Upgrade Plan' };
-  document.getElementById('pageTitle').textContent = titles[id] || id;
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  if (btn) btn.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick')?.includes("'" + id + "'")) n.classList.add('active');
+    });
+  }
+  document.getElementById('pageTitle').textContent = pageTitles[id] || id;
+  closeSidebar();
 }
 
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-}
-
-// ── PAYWALL ──
+// ══════════════════════════════════════
+// PAYWALL
+// ══════════════════════════════════════
 const MAX_FREE = 40;
 function getUsesLeft() {
-  const used = parseInt(localStorage.getItem('cadesk_uses') || '0');
-  return Math.max(0, MAX_FREE - used);
+  return Math.max(0, MAX_FREE - parseInt(localStorage.getItem('cadesk_uses') || '0'));
 }
 function incrementUses() {
   const used = parseInt(localStorage.getItem('cadesk_uses') || '0');
@@ -750,44 +1275,72 @@ function incrementUses() {
 function updateDraftsUI() {
   const left = getUsesLeft();
   const used = MAX_FREE - left;
-  document.getElementById('draftsCounter').textContent = left + ' drafts left';
-  document.getElementById('draftsBadge').textContent = left + ' free drafts remaining';
-  document.getElementById('draftsLeft').textContent = left + ' free drafts remaining · Upgrade for 200+';
-  document.getElementById('draftsUsed').innerHTML = (MAX_FREE - left) + '<span>/' + MAX_FREE + '</span>';
+  document.getElementById('draftsBadge').textContent = left + ' drafts left';
+  document.getElementById('toolDraftsBadge').textContent = left + ' free drafts remaining';
+  document.getElementById('planLabel').textContent = 'Free Plan · ' + left + ' drafts left';
+  document.getElementById('stat-drafts').innerHTML = used + '<span>/' + MAX_FREE + '</span>';
   if (left <= 0) {
     const btn = document.getElementById('genBtn');
-    btn.style.background = '#b8860b';
+    btn.style.background = 'var(--gold)';
     document.getElementById('genBtnText').textContent = '🔒 Upgrade to Generate More';
   }
 }
 function showPaywall() { document.getElementById('paywallModal').classList.add('show'); }
-function closePaywall() { document.getElementById('paywallModal').classList.remove('show'); }
-document.getElementById('paywallModal').addEventListener('click', function(e) { if (e.target === this) closePaywall(); });
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+document.getElementById('paywallModal').addEventListener('click', function(e) { if(e.target===this) closeModal('paywallModal'); });
 
-// ── AI TOOL DATA ──
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function toast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ══════════════════════════════════════
+// AI TOOL
+// ══════════════════════════════════════
 const tabData = {
-  gst: { chips: ["GSTR-3B mismatch reply","ITC reversal notice","GSTIN cancellation response","E-way bill violation"], placeholder: "e.g. Client: XYZ Trading. Received SCN for ITC mismatch of ₹3.2 lakhs in GSTR-3B vs GSTR-2A for FY 2024-25. Client has valid invoices.", system: "You are a senior Indian Chartered Accountant and GST litigation expert with 20+ years of practice. Draft extremely detailed, long, professional GST notice replies and communications in formal Indian legal language. Your drafts must be at least 800-1200 words. Include: proper letterhead format, complete reference numbers, detailed facts of the case, minimum 4-5 strong legal grounds with full citations of GST sections and rules, relevant CBDT/CBIC circulars and notifications, landmark case laws from High Courts and Supreme Court, detailed annexure references, prayer clause, and professional closing. Every draft must be ready to print and submit directly to GST authorities without any editing needed. Write as a senior CA who has handled 1000+ GST cases." },
-  audit: { chips: ["Statutory audit report","Tax audit observations","CARO 2020 reporting","Management representation"], placeholder: "e.g. Draft a CARO 2020 observation for a manufacturing company where fixed asset register is not maintained.", system: "You are a senior Indian CA and statutory auditor with Big 4 experience. Draft extremely detailed, professional audit reports, management letters, audit observations and CARO reporting. Your drafts must be at least 800-1200 words. Include: complete audit observations with SA references, management responses, detailed findings, risk assessment, specific recommendations, compliance status, quantification of issues where possible, and professional audit language per ICAI Standards on Auditing. Every report must be ready to sign and submit without editing." },
-  client: { chips: ["Fee reminder email","Document collection","Filing deadline alert","Engagement letter"], placeholder: "e.g. Write a polite but firm fee reminder email to a client who hasn't paid ₹45,000 for 3 months.", system: "You are a professional CA firm communication expert. Write detailed, professional client communications for Indian CA firms. Your drafts must be complete and ready to send — include proper subject line, salutation, detailed body with all relevant facts, clear call to action, professional closing, and signature block. For fee reminders include invoice details, interest implications, and payment options. For engagement letters include complete scope of work, fee structure, timelines, and terms. Always warm yet firm in tone." },
-  advisory: { chips: ["Capital gains advisory","TDS implications","Presumptive taxation","NRI taxation"], placeholder: "e.g. Client sold property for ₹95 lakhs (purchased for ₹28 lakhs in 2015). Write advisory on LTCG implications.", system: "You are a senior Indian tax advisor and CA with deep expertise in Income Tax Act 1961. Write extremely detailed, comprehensive tax advisory letters of at least 800-1200 words. Include: complete background facts, applicable sections of IT Act, relevant CBDT circulars and notifications, recent case laws, multiple tax planning options with pros and cons, specific recommendations with calculations where possible, compliance requirements, timelines, and appropriate legal disclaimer. Every advisory must be professional enough to charge ₹5,000-10,000 for." },
-  reply: { chips: ["Section 143(1) reply","Section 148 response","Defective return reply","Penalty u/s 271"], placeholder: "e.g. Client received Section 148 notice for AY 2022-23. Client is salaried, all TDS deducted. Draft strong reply.", system: "You are an expert Indian CA in income tax litigation with 20+ years of assessment and appellate experience. Draft extremely detailed, legally strong replies to Income Tax Department notices of at least 800-1200 words. Include: complete facts of the case, jurisdictional objections where applicable, minimum 4-5 strong legal grounds, citations from IT Act 1961, CBDT circulars, landmark Supreme Court and High Court judgments, detailed submissions on each ground, supporting document list, and formal prayer. Every reply must be strong enough to get the notice dropped." },
-  noc: { chips: ["Net worth certificate","No objection certificate","Income certificate","Turnover certificate"], placeholder: "e.g. Draft Net Worth Certificate for Mr. Anil Sharma, net worth ₹1.8 crores as on 31 March 2025 for bank loan.", system: "You are a practising Indian CA drafting formal certificates and NOCs as per ICAI guidelines. Write complete, professional certificates with all required elements: proper heading, addressee details, complete verification statement, detailed asset and liability schedule where applicable, basis of certification, appropriate qualifications and limitations, UDIN placeholder, membership number, firm registration number, seal and signature block. Include all standard ICAI certification language. Make it ready to print on letterhead and sign immediately." }
-};
-
-const demoOutputs = {
-  gst:`REPLY TO SHOW CAUSE NOTICE — INPUT TAX CREDIT MISMATCH\n\nTo,\nThe Assistant Commissioner of Central Tax,\nGST Bhavan, [Jurisdiction]\n\nSubject: Reply to SCN No. _______ dated _______ — ITC discrepancy — Regarding.\n\nSir/Madam,\n\nWe, on behalf of M/s [Client Name], GSTIN _____________, respectfully submit this reply.\n\nGROUNDS OF REPLY:\n\n1. LEGITIMATE AVAILMENT OF ITC UNDER SECTION 16, CGST ACT 2017\n   All four conditions under Section 16(2) stand satisfied:\n   (a) Valid tax invoices are in possession [Section 16(2)(a)];\n   (b) Goods/services have been duly received [Section 16(2)(b)];\n   (c) Tax has been paid to Government [Section 16(2)(c)];\n   (d) Return under Section 39 duly filed.\n\n2. MISMATCH IN GSTR-2B IS NOT GROUND FOR DENIAL\n   Reference: Hon'ble Supreme Court in Union of India v. Bharti Airtel Ltd. [(2021) 134 taxmann.com 519]\n\n3. SUPPORTING DOCUMENTS ENCLOSED\n   Purchase invoices, e-way bills, payment records as Annexure A.\n\nPrayer: SCN be dropped and no demand confirmed.\n\nFor [CA Firm Name]\n[CA Name], FCA | M. No. _____________ | UDIN: _____________`,
-  audit:`INDEPENDENT AUDITOR'S REPORT\n\nTo the Members of M/s [Company Name]\n\nOPINION\nWe have audited the financial statements of M/s [Company Name] for the year ended 31st March 2025.\n\nIn our opinion, the financial statements give a true and fair view in conformity with Indian Accounting Standards (Ind AS) and the Companies Act, 2013.\n\nBASIS FOR OPINION\nConducted in accordance with Standards on Auditing (SAs) under Section 143(10) of the Companies Act, 2013.\n\nKEY AUDIT MATTERS\n[To be specified based on significant risks identified]\n\nFor [CA Firm Name]\nChartered Accountants | Firm Reg. No. _____________\n\n[CA Name], Partner | M. No. _____________ | UDIN: _____________`,
-  client:`Subject: Reminder — Outstanding Professional Fees\n\nDear [Client Name],\n\nHope this message finds you well.\n\nWe write to bring to your attention that our professional fees of ₹[Amount] for [Services] remain outstanding as on date.\n\nInvoice Details:\n— Invoice No.: _____________\n— Amount Due: ₹_____________\n— Due Date: _____________\n\nKindly arrange payment via NEFT/GPay/PayPal at earliest convenience.\n\nWe value our professional relationship and look forward to your continued association.\n\nThanking you,\nYours sincerely,\n\n[CA Name], FCA | [Firm Name]`,
-  advisory:`TAX ADVISORY NOTE\n\nTo: [Client Name]\nSubject: Advisory — Tax Implications\nDate: [Date]\n\nDISCLAIMER: This is advisory in nature. We recommend verification before acting.\n\nBACKGROUND\nBased on information shared by you regarding [brief facts].\n\nAPPLICABLE PROVISIONS\n1. Section [X] of Income Tax Act, 1961\n2. CBDT Circular No. _______ dated _______\n\nANALYSIS\nLong-Term Capital Gains (if applicable): Tax @ 12.5% without indexation u/s 112 (post Finance Act 2024).\n\nRECOMMENDATIONS\n1. Consider exemption under Section 54/54F if reinvesting in residential property\n2. Compute advance tax liability to avoid interest u/s 234B/234C\n\nFor [CA Firm Name]\n[CA Name], FCA | M. No. _____________`,
-  reply:`REPLY TO INCOME TAX NOTICE\n\nTo,\nThe Income Tax Officer / Assessing Officer,\nWard _____, Circle _____, [City]\n\nPAN: _____________ | AY: _____________\n\nSir/Madam,\n\nIn reply to your notice dated _______, we submit:\n\n1. ALL INCOME DULY DISCLOSED\n   Return of Income filed on _______ vide Acknowledgement No. _____________\n\n2. TAX FULLY PAID\n   TDS of ₹_______ deducted as reflected in Form 26AS and AIS.\n\n3. NO INCOME ESCAPED ASSESSMENT\n   Reference: CIT v. Kelvinator of India Ltd. [(2010) 320 ITR 561 (SC)]\n\nPRAYER: Notice be dropped and assessment completed accepting return as filed.\n\nEnclosures: ITR Acknowledgement, Form 26AS, Form 16\n\n[CA Name], FCA | M. No. _____________`,
-  noc:`CERTIFICATE OF NET WORTH\n\nTo Whomsoever It May Concern\n\nThis is to certify that based on my examination of financial records, the Net Worth of:\n\nName: _____________\nPAN: _____________\n\nAs on 31st March 2025 is as under:\n\nSTATEMENT OF NET WORTH\nImmovable Property          ₹ ___________\nInvestments (MF/FD/Shares)  ₹ ___________\nBank Balances               ₹ ___________\nOther Assets                ₹ ___________\nTOTAL ASSETS (A)            ₹ ___________\nLess: Total Liabilities (B) ₹ ___________\nNET WORTH (A-B)             ₹ ___________\n\nThis certificate is issued for [purpose] only.\n\nFor [CA Firm Name]\n[CA Name], FCA | M. No. _____________\nUDIN: _____________ | Date: _____________`
+  gst: {
+    chips: ["GSTR-3B mismatch reply","ITC reversal notice","GSTIN cancellation response","E-way bill violation reply"],
+    placeholder: "e.g. Client: XYZ Trading Co. Received SCN for ITC mismatch of ₹3.2 lakhs in GSTR-3B vs GSTR-2A for FY 2024-25. Client has valid purchase invoices.",
+    system: "You are a senior Indian Chartered Accountant and GST litigation expert with 20+ years of practice. Draft extremely detailed, comprehensive GST notice replies of minimum 800-1200 words in formal Indian legal language. Include: proper letterhead format, complete reference numbers, detailed facts, minimum 5 strong legal grounds with full citations of CGST Act sections and rules, relevant CBIC circulars and notifications with dates, landmark High Court and Supreme Court judgments with citations, detailed annexure list, formal prayer clause, and professional closing. Every draft must be ready to print and submit directly to GST authorities. Write as a senior CA who has handled 1000+ GST cases."
+  },
+  audit: {
+    chips: ["Statutory audit report","Tax audit observations","CARO 2020 reporting","Management representation letter"],
+    placeholder: "e.g. Draft CARO 2020 observation for manufacturing company where fixed asset register is not maintained and physical verification was done 3 years ago.",
+    system: "You are a senior Indian CA and statutory auditor with Big 4 experience. Draft extremely detailed, comprehensive audit reports and observations of minimum 800-1200 words. Include: complete audit observations per ICAI Standards on Auditing (SA numbers), management responses, detailed findings with risk assessment, materiality considerations, specific recommendations with timeline, compliance status, CARO 2020 specific reporting requirements, and professional closing per ICAI format. Every report must be ready to sign and submit."
+  },
+  client: {
+    chips: ["Fee reminder email","Document collection request","Filing deadline alert","Engagement letter"],
+    placeholder: "e.g. Write a polite but firm fee reminder email to a client who hasn't paid ₹45,000 for 3 months of GST compliance work.",
+    system: "You are a professional CA firm communication expert. Write complete, detailed professional emails for Indian CA firms. Include: proper subject line, warm but professional salutation, detailed body with all relevant facts and figures, clear next steps and call to action, deadline mentions, payment details, professional closing and signature block. For fee reminders include invoice details, applicable interest, and multiple payment options. Make it ready to send immediately."
+  },
+  advisory: {
+    chips: ["Capital gains advisory","TDS implications note","Presumptive taxation advice","NRI taxation advisory"],
+    placeholder: "e.g. Client sold residential property for ₹95 lakhs (purchased for ₹28 lakhs in 2015). Write advisory on LTCG tax implications, indexation benefit, and Section 54 exemption options.",
+    system: "You are a senior Indian tax advisor and CA with deep expertise in Income Tax Act 1961. Write extremely detailed, comprehensive tax advisory letters of minimum 800-1200 words. Include: complete background facts, all applicable sections of IT Act with explanations, relevant CBDT circulars and notifications with dates, recent landmark case laws, multiple tax planning options with pros and cons and calculations, specific recommendations with step-by-step compliance requirements, important timelines, and professional disclaimer. Make it worth ₹5,000-10,000 in advisory fees."
+  },
+  reply: {
+    chips: ["Section 143(1) intimation reply","Section 148 notice response","Section 139(9) defective return","Penalty u/s 271 reply"],
+    placeholder: "e.g. Client received Section 148 notice for AY 2022-23 claiming income escaped assessment. Client is salaried with no other income. All taxes paid via TDS.",
+    system: "You are an expert Indian CA in income tax litigation with 20+ years of assessment and appellate experience. Draft extremely detailed, legally strong replies to Income Tax Department notices of minimum 800-1200 words. Include: complete facts, jurisdictional objections where applicable, minimum 5 strong legal grounds, citations from IT Act 1961, CBDT circulars, landmark Supreme Court and High Court judgments with full citations, detailed submissions on each ground, supporting document checklist, and formal prayer requesting complete relief. Make it strong enough to get the notice dropped."
+  },
+  noc: {
+    chips: ["Net worth certificate","No objection certificate","Income certificate","Turnover certificate"],
+    placeholder: "e.g. Draft Net Worth Certificate for Mr. Anil Sharma, net worth ₹1.8 crores as on 31 March 2025 for bank loan application. PAN: AAAAA0001A.",
+    system: "You are a practising Indian CA drafting formal certificates and NOCs as per ICAI guidelines. Write complete, detailed professional certificates. Include: proper heading and addressee, complete verification statement with scope of verification, detailed asset and liability schedule with categories and amounts where applicable, basis of certification and limitations, all standard ICAI certification language, UDIN placeholder [UDIN: _______________], membership number placeholder [M.No.: _______________], firm registration number placeholder [FRN: _______________], place, date, seal and signature block. Make it complete and ready to print on letterhead."
+  }
 };
 
 let currentTab = 'gst';
+let currentOutput = '';
 let totalDocs = 0;
 
 function setTab(el, tab) {
-  document.querySelectorAll('.ttab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   currentTab = tab;
   renderChips(tab);
@@ -799,7 +1352,8 @@ function renderChips(tab) {
   c.innerHTML = '';
   tabData[tab].chips.forEach(text => {
     const b = document.createElement('button');
-    b.className = 'chip'; b.textContent = text;
+    b.className = 'chip';
+    b.textContent = text;
     b.onclick = () => { document.getElementById('aiInput').value = text; };
     c.appendChild(b);
   });
@@ -808,7 +1362,7 @@ renderChips('gst');
 
 async function generateDoc() {
   const input = document.getElementById('aiInput').value.trim();
-  if (!input) return;
+  if (!input) { toast('Please describe your case first!'); return; }
   if (getUsesLeft() <= 0) { showPaywall(); return; }
 
   const btn = document.getElementById('genBtn');
@@ -816,143 +1370,367 @@ async function generateDoc() {
   const placeholder = document.getElementById('outputPlaceholder');
   const typing = document.getElementById('typingDots');
   const outputText = document.getElementById('outputText');
-  const copyBtn = document.getElementById('copyBtn');
+  const copyBtn = document.getElementById('copyDocBtn');
+  const pdfBtn = document.getElementById('pdfBtn');
 
-  btn.disabled = true; btnText.textContent = 'Drafting...';
-  placeholder.style.display = 'none'; outputText.textContent = '';
-  copyBtn.classList.remove('show'); typing.classList.add('show');
+  btn.disabled = true;
+  btnText.textContent = 'AI is drafting...';
+  placeholder.style.display = 'none';
+  outputText.textContent = '';
+  copyBtn.style.display = 'none';
+  pdfBtn.style.display = 'none';
+  typing.classList.add('show');
 
   try {
     const response = await fetch('https://dawn-mud-db43.shailshaikhq5.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system: tabData[currentTab].system,
-        message: input
-      })
+      body: JSON.stringify({ system: tabData[currentTab].system, message: input })
     });
-
     const data = await response.json();
-    console.log('API Response:', JSON.stringify(data));
     typing.classList.remove('show');
 
     let text = 'Something went wrong. Please try again.';
-    if (data?.content && data.content[0] && data.content[0].text) {
-      text = data.content[0].text;
-    } else if (data?.error?.message) {
-      text = 'Error: ' + data.error.message;
-    } else if (data?.error) {
-      text = 'Error: ' + JSON.stringify(data.error);
-    } else {
-      text = JSON.stringify(data);
-    }
+    if (data?.content?.[0]?.text) text = data.content[0].text;
+    else if (data?.error?.message) text = 'Error: ' + data.error.message;
+    else if (typeof data === 'string') text = data;
+
+    currentOutput = text;
     outputText.textContent = text;
-    copyBtn.classList.add('show');
+    copyBtn.style.display = 'inline-flex';
+    pdfBtn.style.display = 'inline-flex';
     incrementUses();
     totalDocs++;
-    document.getElementById('totalDocs').textContent = totalDocs;
     updateDraftsUI();
-    btn.disabled = false;
-    const left = getUsesLeft();
-    if (left > 0) { btnText.textContent = 'Generate Document →'; }
+    toast('✅ Document generated successfully!');
 
   } catch(err) {
     typing.classList.remove('show');
-    outputText.textContent = 'Connection error. Please try again.';
-    btn.disabled = false;
-    btnText.textContent = 'Generate Document →';
+    outputText.textContent = 'Connection error. Please check your internet and try again.';
+    toast('❌ Connection error. Try again.');
   }
+
+  btn.disabled = false;
+  const left = getUsesLeft();
+  if (left > 0) btnText.textContent = left < MAX_FREE ? `Generate Document (${left} left)` : 'Generate Document →';
+  else { btnText.textContent = '🔒 Upgrade to Generate More'; btn.style.background = 'var(--gold)'; }
 }
 
 function copyDoc() {
-  navigator.clipboard.writeText(document.getElementById('outputText').textContent).then(() => {
-    const b = document.getElementById('copyBtn');
-    b.textContent = '✓ Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 2000);
+  if (!currentOutput) return;
+  navigator.clipboard.writeText(currentOutput).then(() => {
+    toast('📋 Copied to clipboard!');
+    const b = document.getElementById('copyDocBtn');
+    b.textContent = '✅ Copied';
+    setTimeout(() => { b.textContent = '📋 Copy'; }, 2000);
   });
 }
 
-// ── CLIENTS ──
-let clients = [];
+// ══════════════════════════════════════
+// PDF EXPORT
+// ══════════════════════════════════════
+function exportPDF() {
+  if (!currentOutput) { toast('No document to export!'); return; }
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentW = pageW - 2 * margin;
+
+    // Header
+    doc.setFillColor(15, 14, 11);
+    doc.rect(0, 0, pageW, 18, 'F');
+    doc.setTextColor(244, 241, 234);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CAdesk.ai', margin, 12);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(180, 134, 11);
+    doc.text('AI Practice Management for Indian CAs', pageW - margin, 12, { align: 'right' });
+
+    // Date line
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(8);
+    doc.text('Generated: ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }), margin, 24);
+    doc.text('CAdesk.ai — For CA Review Only', pageW - margin, 24, { align: 'right' });
+
+    // Divider
+    doc.setDrawColor(184, 134, 11);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 26, pageW - margin, 26);
+
+    // Content
+    doc.setTextColor(26, 24, 22);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(currentOutput, contentW);
+    let y = 34;
+    lines.forEach(line => {
+      if (y > pageH - 24) {
+        doc.addPage();
+        // Re-add header on new page
+        doc.setFillColor(15, 14, 11);
+        doc.rect(0, 0, pageW, 14, 'F');
+        doc.setTextColor(244, 241, 234);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('CAdesk.ai', margin, 10);
+        doc.setTextColor(26, 24, 22);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        y = 22;
+      }
+      doc.text(line, margin, y);
+      y += 5.5;
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(220, 216, 208);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('⚠️ This is an AI-generated draft. Review and verify all legal citations before use.', margin, pageH - 9);
+      doc.text(`Page ${i} of ${pageCount}`, pageW - margin, pageH - 9, { align: 'right' });
+    }
+
+    const filename = `CAdesk_${currentTab.toUpperCase()}_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
+    toast('⬇️ PDF downloaded: ' + filename);
+  } catch(err) {
+    toast('PDF export failed. Please try again.');
+    console.error(err);
+  }
+}
+
+// ══════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════
+let clients = JSON.parse(localStorage.getItem('cadesk_clients') || '[]');
+
+function saveClients() {
+  localStorage.setItem('cadesk_clients', JSON.stringify(clients));
+  document.getElementById('stat-clients').textContent = clients.length;
+}
+
+function toggleAddClient() {
+  const form = document.getElementById('addClientForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
 function addClient() {
-  const name = document.getElementById('clientName').value.trim();
-  if (!name) { alert('Please enter client name'); return; }
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { toast('Client name is required!'); return; }
   const client = {
-    name, gstin: document.getElementById('clientGSTIN').value || '—',
-    pan: document.getElementById('clientPAN').value || '—',
-    phone: document.getElementById('clientPhone').value || '—',
-    email: document.getElementById('clientEmail').value || '—',
-    plan: document.getElementById('clientPlan').value,
-    status: 'active'
+    id: Date.now(),
+    name, phone: document.getElementById('c-phone').value,
+    email: document.getElementById('c-email').value,
+    pan: document.getElementById('c-pan').value,
+    gst: document.getElementById('c-gst').value,
+    service: document.getElementById('c-service').value,
+    address: document.getElementById('c-address').value,
+    notes: document.getElementById('c-notes').value,
+    status: 'active', added: new Date().toLocaleDateString('en-IN')
   };
   clients.push(client);
+  saveClients();
   renderClients();
-  ['clientName','clientGSTIN','clientPAN','clientPhone','clientEmail'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('totalClients').textContent = clients.length;
+  ['c-name','c-phone','c-email','c-pan','c-gst','c-address','c-notes'].forEach(id => document.getElementById(id).value = '');
+  toggleAddClient();
+  toast('✅ Client added successfully!');
+}
+
+function deleteClient(id) {
+  if (!confirm('Delete this client?')) return;
+  clients = clients.filter(c => c.id !== id);
+  saveClients();
+  renderClients();
+  toast('🗑️ Client deleted.');
+}
+
+function draftForClient(id) {
+  const c = clients.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('aiInput').value = `Client: ${c.name}. GSTIN: ${c.gst || 'N/A'}. PAN: ${c.pan || 'N/A'}. Service: ${c.service}.`;
+  showPanel('aitool', null);
+  toast('Client loaded into AI tool!');
+}
+
+let clientFilter = '';
+function filterClients() {
+  clientFilter = document.getElementById('clientSearch').value.toLowerCase();
+  renderClients();
 }
 
 function renderClients() {
   const tbody = document.getElementById('clientsTable');
-  document.getElementById('clientCount').textContent = clients.length + ' clients';
-  if (clients.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;">No clients added yet!</td></tr>';
+  const count = document.getElementById('clientCount');
+  const filtered = clients.filter(c =>
+    c.name.toLowerCase().includes(clientFilter) ||
+    (c.gst || '').toLowerCase().includes(clientFilter) ||
+    (c.pan || '').toLowerCase().includes(clientFilter)
+  );
+  count.textContent = filtered.length + ' of ' + clients.length + ' clients';
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="5">' + (clients.length ? 'No clients match your search.' : 'No clients yet. Add your first client above!') + '</td></tr>';
     return;
   }
-  tbody.innerHTML = clients.map((c, i) => `
+  tbody.innerHTML = filtered.map(c => `
     <tr>
-      <td><strong>${c.name}</strong><br><span style="font-size:11px;color:var(--muted);">${c.phone}</span></td>
-      <td style="font-size:12px;">${c.gstin}</td>
-      <td><span style="font-size:12px;">${c.plan}</span></td>
-      <td><span class="status-pill status-active">Active</span></td>
-      <td><button class="action-btn" onclick="draftForClient(${i})">Draft Doc</button></td>
+      <td><strong>${c.name}</strong><br><span style="font-size:11px;color:var(--muted);">${c.phone || ''} ${c.email ? '· ' + c.email : ''}</span></td>
+      <td style="font-size:12px;font-family:'IBM Plex Mono',monospace;">${c.gst || '—'}</td>
+      <td><span class="pill pill-blue">${c.service}</span></td>
+      <td><span class="pill pill-green">Active</span></td>
+      <td>
+        <button class="btn btn-outline btn-xs" onclick="draftForClient(${c.id})" style="margin-right:4px;">✍️ Draft</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteClient(${c.id})">🗑️</button>
+      </td>
     </tr>`).join('');
 }
+renderClients();
 
-function draftForClient(i) {
-  const c = clients[i];
-  document.getElementById('aiInput').value = `Client: ${c.name}. GSTIN: ${c.gstin}. Plan: ${c.plan}.`;
-  showPanel('aitool', document.querySelector('[onclick*=aitool]'));
+// ══════════════════════════════════════
+// PAYMENTS
+// ══════════════════════════════════════
+let payments = JSON.parse(localStorage.getItem('cadesk_payments') || '[]');
+
+function savePayments() {
+  localStorage.setItem('cadesk_payments', JSON.stringify(payments));
+  updatePaymentStats();
 }
 
-// ── BULK ──
-let selectedBulkType = 'gst_reminder';
+function updatePaymentStats() {
+  const received = payments.filter(p => p.status === 'Paid').reduce((s, p) => s + p.amount, 0);
+  const pending = payments.filter(p => p.status === 'Pending' || p.status === 'Partial').reduce((s, p) => s + p.amount, 0);
+  const overdue = payments.filter(p => p.status === 'Overdue').length;
+  document.getElementById('p-received').textContent = '₹' + received.toLocaleString('en-IN');
+  document.getElementById('p-pending').textContent = '₹' + pending.toLocaleString('en-IN');
+  document.getElementById('p-clients').textContent = [...new Set(payments.map(p => p.client))].length;
+  document.getElementById('p-overdue').textContent = overdue;
+  document.getElementById('stat-pending').textContent = '₹' + pending.toLocaleString('en-IN');
+}
+
+function addPayment() {
+  const client = document.getElementById('p-client').value.trim();
+  const amount = parseFloat(document.getElementById('p-amount').value);
+  if (!client || !amount) { toast('Client name and amount are required!'); return; }
+  const payment = {
+    id: Date.now(), client, amount,
+    status: document.getElementById('p-status').value,
+    date: document.getElementById('p-date').value,
+    service: document.getElementById('p-service').value,
+    notes: document.getElementById('p-notes').value,
+    added: new Date().toLocaleDateString('en-IN')
+  };
+  payments.push(payment);
+  savePayments();
+  renderPayments();
+  ['p-client','p-amount','p-date','p-service','p-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-status').value = 'Pending';
+  toast('✅ Payment recorded!');
+}
+
+function deletePayment(id) {
+  if (!confirm('Delete this record?')) return;
+  payments = payments.filter(p => p.id !== id);
+  savePayments();
+  renderPayments();
+  toast('🗑️ Payment deleted.');
+}
+
+function markPaid(id) {
+  const p = payments.find(x => x.id === id);
+  if (p) { p.status = 'Paid'; savePayments(); renderPayments(); toast('✅ Marked as paid!'); }
+}
+
+function renderPayments() {
+  const tbody = document.getElementById('paymentsTable');
+  if (payments.length === 0) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No payment records yet.</td></tr>';
+    return;
+  }
+  const pillClass = { Paid: 'pill-green', Pending: 'pill-gold', Overdue: 'pill-red', Partial: 'pill-blue' };
+  tbody.innerHTML = payments.map(p => `
+    <tr>
+      <td><strong>${p.client}</strong></td>
+      <td style="font-size:12px;">${p.service || '—'}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-weight:600;">₹${p.amount.toLocaleString('en-IN')}</td>
+      <td style="font-size:12px;">${p.date || '—'}</td>
+      <td><span class="pill ${pillClass[p.status] || 'pill-grey'}">${p.status}</span></td>
+      <td>
+        ${p.status !== 'Paid' ? `<button class="btn btn-green btn-xs" onclick="markPaid(${p.id})" style="margin-right:4px;">✓ Paid</button>` : ''}
+        <button class="btn btn-danger btn-xs" onclick="deletePayment(${p.id})">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+renderPayments();
+updatePaymentStats();
+
+// ══════════════════════════════════════
+// BULK GENERATOR
+// ══════════════════════════════════════
+let selectedBulk = 'gst';
 function selectBulk(el, type) {
-  document.querySelectorAll('.bulk-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.bulk-option').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  selectedBulkType = type;
+  selectedBulk = type;
 }
 
 const bulkTemplates = {
-  gst_reminder: "Respected Sir/Madam 🙏\n\nYour GSTR-3B filing for [MONTH] is due on [DATE].\n\nKindly share purchase/sale invoices and bank statement at earliest.\n\nDelay may attract late fees of ₹50/day.\n\nThanks & Regards,\n[CA FIRM NAME]",
-  fee_reminder: "Dear [CLIENT NAME] ji 🙏\n\nGentle reminder that our fees of ₹[AMOUNT] for [SERVICE] are pending.\n\nKindly arrange payment:\n📱 GPay: shailshaikhq3@okaxis\n💳 PayPal: paypal.me/kazeee496\n\nThank you!\n[CA FIRM NAME]",
-  doc_request: "Dear [CLIENT NAME] ji 🙏\n\nFor your [ITR/GST] filing, please share:\n📌 Form 16\n📌 Bank statements\n📌 Investment proofs\n📌 Other relevant documents\n\nKindly send by [DATE].\n\n[CA FIRM NAME]",
-  itr_reminder: "Dear [CLIENT NAME] ji 🙏\n\nITR filing deadline is [DATE].\n\nPlease share your documents at earliest to avoid last minute rush.\n\nLate filing attracts penalty of ₹5,000.\n\n[CA FIRM NAME]",
-  tds_reminder: "Dear [CLIENT NAME] ji 🙏\n\nTDS return for Q[X] FY [FY] is due on [DATE].\n\nKindly share TDS challan details and deductee details at earliest.\n\n[CA FIRM NAME]",
-  deadline_alert: "Dear [CLIENT NAME] ji 🙏\n\nImportant compliance deadline alert!\n\n[COMPLIANCE TYPE] is due on [DATE].\n\nPlease take necessary action at earliest.\n\n[CA FIRM NAME]"
+  gst: `Respected Sir/Madam 🙏\n\nYour GSTR-3B filing for [MONTH] is due on [DATE].\n\nKindly share purchase/sale invoices and bank statement at earliest. Delay may attract late fees of ₹50/day.\n\nThanks & Regards,\n[CA FIRM NAME]`,
+  itr: `Dear [CLIENT NAME] ji 🙏\n\nITR filing deadline is [DATE]. Please share your documents at earliest to avoid last minute rush. Late filing attracts penalty of ₹5,000.\n\n[CA FIRM NAME]`,
+  fee: `Dear [CLIENT NAME] ji 🙏\n\nGentle reminder that our fees of ₹[AMOUNT] for [SERVICE] are pending.\n\nPayment options:\n📱 GPay: shailshaikhq3@okaxis\n💳 PayPal: paypal.me/kazeee496\n\n[CA FIRM NAME]`,
+  docs: `Dear [CLIENT NAME] ji 🙏\n\nFor your [ITR/GST] filing, please share:\n📌 Form 16\n📌 Bank statements\n📌 Investment proofs\n📌 Other documents\n\nKindly send by [DATE].\n\n[CA FIRM NAME]`,
+  tds: `Dear [CLIENT NAME] ji 🙏\n\nTDS return for Q[X] FY [FY] is due on [DATE]. Kindly share TDS challan and deductee details at earliest.\n\n[CA FIRM NAME]`,
+  welcome: `Dear [CLIENT NAME] ji 🙏\n\nWelcome to [CA FIRM NAME]! We're delighted to have you as our client.\n\nWe will handle your: [SERVICES]\n\nContact: [PHONE] | [EMAIL]\n\n[CA FIRM NAME]`
 };
 
-async function generateBulk() {
-  if (getUsesLeft() <= 0) { showPaywall(); return; }
+function generateBulk() {
   const details = document.getElementById('bulkDetails').value;
+  let template = bulkTemplates[selectedBulk];
+  if (details) template += '\n\nNote: ' + details;
   const output = document.getElementById('bulkOutput');
-  const content = document.getElementById('bulkOutputContent');
+  const content = document.getElementById('bulkContent');
   output.style.display = 'block';
-  let template = bulkTemplates[selectedBulkType];
-  if (details) template += '\n\nAdditional info: ' + details;
-  content.innerHTML = `<div class="wa-template"><div class="wa-template-title">Ready to Send</div><div class="wa-template-body">${template}</div><button class="wa-copy-btn" onclick="copyWA(this)">Copy</button></div>`;
-  incrementUses(); updateDraftsUI();
+  content.innerHTML = `<div class="wa-card"><div class="wa-title">Ready to Send</div><div class="wa-body" id="bulkText">${template}</div><button class="btn btn-outline btn-xs" style="margin-top:10px;" onclick="copyBulk()">📋 Copy</button></div>`;
 }
 
-// ── WHATSAPP COPY ──
+function copyBulk() {
+  const text = document.getElementById('bulkText').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('📋 Copied!'));
+}
+
+// ══════════════════════════════════════
+// WHATSAPP COPY
+// ══════════════════════════════════════
 function copyWA(btn) {
   const text = btn.previousElementSibling.textContent;
   navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    toast('📋 Template copied!');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
   });
 }
 
-// ── INIT ──
+// ══════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════
+document.getElementById('aiInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.ctrlKey) generateDoc();
+});
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
 updateDraftsUI();
+document.getElementById('stat-clients').textContent = clients.length;
 </script>
 </body>
 </html>
